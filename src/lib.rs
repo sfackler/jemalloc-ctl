@@ -42,6 +42,7 @@
 //!     thread::sleep(Duration::from_secs(10));
 //! }
 //! ```
+#![doc(html_root_url="https://docs.rs/jemalloc-ctl/0.1")]
 #![warn(missing_docs)]
 use std::os::raw::{c_int, c_void, c_char};
 use std::io;
