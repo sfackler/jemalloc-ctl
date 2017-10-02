@@ -4,13 +4,19 @@
 //! It can be used to tune the allocator, take heap dumps, and retrieve statistics. This crate
 //! provides a typed API over that interface.
 //!
-//! While `mallctl` takes a string to specify an operation (for example `stats.allocated` or
+//! While `mallctl` takes a string to specify an operation (e.g. `stats.allocated` or
 //! stats.arenas.15.muzzy_decay_ms`), the overhead of repeatedly parsing those strings is not ideal.
 //! Fortunately, jemalloc offers the ability to translate the string ahead of time into a
 //! "Management Information Base" (MIB) to speed up future lookups.
 //!
 //! This crate provides a type for each `mallctl` operation. Its constructor performs the MIB
 //! lookup, so the struct should be saved if the same operation is going to be repeatedly performed.
+//!
+//! # Warning
+//!
+//! This library is forced to assume that jemalloc is present and simply link to some of its
+//! functions. This will result in linker errors when building a binary that doesn't actually use
+//! jemalloc as its allocator.
 //!
 //! # Examples
 //!
@@ -43,6 +49,7 @@ use std::mem;
 use std::ptr;
 
 pub mod stats;
+pub mod thread;
 
 extern "C" {
     #[cfg_attr(any(target_os = "macos", target_os = "android", target_os = "ios",
