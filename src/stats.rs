@@ -80,6 +80,7 @@ impl Allocated {
 /// ```
 ///
 /// [`Epoch`]: ../struct.Epoch.html
+/// [`Allocated`]: struct.Allocated.html
 #[derive(Copy, Clone)]
 pub struct Active([usize; 2]);
 
