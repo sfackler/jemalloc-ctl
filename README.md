@@ -5,6 +5,29 @@
 
 jemalloc control and introspection.
 
+## Example
+
+```rust
+use std::thread;
+use std::time::Duration;
+use jemalloc_ctl::Epoch;
+use jemalloc_ctl::stats::{Allocated, Resident};
+
+let epoch = Epoch::new().unwrap();
+let allocated = Allocated::new().unwrap();
+let resident = Resident::new().unwrap();
+
+loop {
+    // many statistics are cached and only updated when the epoch is advanced.
+    epoch.advance().unwrap();
+
+    let allocated = allocated.get().unwrap();
+    let resident = resident.get().unwrap();
+    println!("{} bytes allocated/{} bytes resident", allocated, resident);
+    thread::sleep(Duration::from_secs(10));
+}
+```
+
 ## License
 
 Licensed under either of
