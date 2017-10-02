@@ -1,3 +1,42 @@
+//! jemalloc control and introspection.
+//!
+//! jemalloc offers a powerful introspection and control interface through the `mallctl` function.
+//! It can be used to tune the allocator, take heap dumps, and retrieve statistics. This crate
+//! provides a typed API over that interface.
+//!
+//! While `mallctl` takes a string to specify an operation (for example `stats.allocated` or
+//! stats.arenas.15.muzzy_decay_ms`), the overhead of repeatedly parsing those strings is not ideal.
+//! Fortunately, jemalloc offers the ability to translate the string ahead of time into a
+//! "Management Information Base" (MIB) to speed up future lookups.
+//!
+//! This crate provides a type for each `mallctl` operation. Its constructor performs the MIB
+//! lookup, so the struct should be saved if the same operation is going to be repeatedly performed.
+//!
+//! # Examples
+//!
+//! Repeatedly printing allocation statistics:
+//!
+//! ```no_run
+//! use std::thread;
+//! use std::time::Duration;
+//! use jemalloc_ctl::Epoch;
+//! use jemalloc_ctl::stats::{Allocated, Resident};
+//!
+//! let epoch = Epoch::new().unwrap();
+//! let allocated = Allocated::new().unwrap();
+//! let resident = Resident::new().unwrap();
+//!
+//! loop {
+//!     // many statistics are cached and only updated when the epoch is advanced.
+//!     epoch.advance().unwrap();
+//!
+//!     let allocated = allocated.get().unwrap();
+//!     let resident = resident.get().unwrap();
+//!     println!("{} bytes allocated/{} bytes resident", allocated, resident);
+//!     thread::sleep(Duration::from_secs(10));
+//! }
+//! ```
+#![warn(missing_docs)]
 use std::os::raw::{c_int, c_void, c_char};
 use std::io;
 use std::mem;
