@@ -72,6 +72,7 @@ extern "C" {
 }
 
 unsafe fn name_to_mib(name: &str, mib: &mut [usize]) -> io::Result<()> {
+    debug_assert!(name.ends_with("\0"));
     let mut len = mib.len();
     cvt(mallctlnametomib(
         name.as_ptr() as *const _,
