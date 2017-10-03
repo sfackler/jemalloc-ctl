@@ -48,7 +48,9 @@ use std::os::raw::{c_int, c_void, c_char};
 use std::io;
 use std::mem;
 use std::ptr;
+use std::ffi::CStr;
 
+pub mod config;
 pub mod stats;
 pub mod thread;
 
@@ -96,6 +98,14 @@ unsafe fn get<T>(mib: &[usize]) -> io::Result<T> {
     ))?;
     debug_assert_eq!(len, mem::size_of::<T>());
     Ok(value)
+}
+
+unsafe fn get_str(mib: &[usize]) -> io::Result<&'static str> {
+    let ptr: *const c_char = get(mib)?;
+    let cstr = CStr::from_ptr(ptr);
+    cstr.to_str().map_err(|e| {
+        io::Error::new(io::ErrorKind::InvalidData, e)
+    })
 }
 
 unsafe fn get_set<T>(mib: &[usize], mut value: T) -> io::Result<T> {
@@ -156,5 +166,38 @@ impl Epoch {
     /// another thread triggered a referesh.
     pub fn advance(&self) -> io::Result<u64> {
         unsafe { get_set(&self.0, 1) }
+    }
+}
+
+/// A type providing access to the jemalloc version string.
+///
+/// # Note
+///
+/// The version of jemalloc currently shipped with the Rust distribution has a bogus version string.
+///
+/// # Example
+///
+/// ```
+/// use jemalloc_ctl::Version;
+///
+/// let version = Version::new().unwrap();
+///
+/// println!("jemalloc version {}", version.get().unwrap());
+#[derive(Copy, Clone)]
+pub struct Version([usize; 1]);
+
+impl Version {
+    /// Returns a new `Version`.
+    pub fn new() -> io::Result<Version> {
+        let mut mib = [0; 1];
+        unsafe {
+            name_to_mib("version\0", &mut mib)?;
+        }
+        Ok(Version(mib))
+    }
+
+    /// Returns the jemalloc version string.
+    pub fn get(&self) -> io::Result<&'static str> {
+        unsafe { get_str(&self.0) }
     }
 }
