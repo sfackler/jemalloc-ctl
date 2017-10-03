@@ -15,6 +15,7 @@ use {name_to_mib, get_str};
 /// let malloc_conf = MallocConf::new().unwrap();
 ///
 /// println!("default malloc conf: {}", malloc_conf.get().unwrap());
+/// ```
 #[derive(Copy, Clone)]
 pub struct MallocConf([usize; 2]);
 

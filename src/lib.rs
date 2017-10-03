@@ -51,6 +51,7 @@ use std::ptr;
 use std::ffi::CStr;
 
 pub mod config;
+pub mod opt;
 pub mod stats;
 pub mod thread;
 
