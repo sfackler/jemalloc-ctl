@@ -50,6 +50,7 @@ use std::mem;
 use std::ptr;
 use std::ffi::CStr;
 
+pub mod arenas;
 pub mod config;
 pub mod opt;
 pub mod stats;
