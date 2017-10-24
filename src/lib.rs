@@ -42,9 +42,9 @@
 //!     thread::sleep(Duration::from_secs(10));
 //! }
 //! ```
-#![doc(html_root_url="https://docs.rs/jemalloc-ctl/0.1")]
+#![doc(html_root_url = "https://docs.rs/jemalloc-ctl/0.1")]
 #![warn(missing_docs)]
-use std::os::raw::{c_int, c_void, c_char};
+use std::os::raw::{c_char, c_int, c_void};
 use std::io;
 use std::mem;
 use std::ptr;
@@ -54,17 +54,18 @@ pub mod arenas;
 pub mod config;
 pub mod opt;
 pub mod stats;
+pub mod stats_print;
 pub mod thread;
 
 extern "C" {
     #[cfg_attr(any(target_os = "macos", target_os = "android", target_os = "ios",
-                    target_os = "dragonfly", target_os = "windows", target_env = "musl"),
-                link_name = "je_mallctlnametomib")]
+                     target_os = "dragonfly", target_os = "windows", target_env = "musl"),
+               link_name = "je_mallctlnametomib")]
     fn mallctlnametomib(name: *const c_char, mibp: *mut usize, miblenp: *mut usize) -> c_int;
 
     #[cfg_attr(any(target_os = "macos", target_os = "android", target_os = "ios",
-                    target_os = "dragonfly", target_os = "windows", target_env = "musl"),
-                link_name = "je_mallctlbymib")]
+                     target_os = "dragonfly", target_os = "windows", target_env = "musl"),
+               link_name = "je_mallctlbymib")]
     fn mallctlbymib(
         mib: *const usize,
         miblen: usize,
@@ -73,6 +74,15 @@ extern "C" {
         newp: *mut c_void,
         newlen: usize,
     ) -> c_int;
+
+    #[cfg_attr(any(target_os = "macos", target_os = "android", target_os = "ios",
+                     target_os = "dragonfly", target_os = "windows", target_env = "musl"),
+               link_name = "je_malloc_stats_print")]
+    fn malloc_stats_print(
+        write_cb: Option<unsafe extern "C" fn(*mut c_void, *const c_char)>,
+        cbopaque: *mut c_void,
+        opts: *const c_char,
+    );
 }
 
 unsafe fn name_to_mib(name: &str, mib: &mut [usize]) -> io::Result<()> {
@@ -105,9 +115,8 @@ unsafe fn get<T>(mib: &[usize]) -> io::Result<T> {
 unsafe fn get_str(mib: &[usize]) -> io::Result<&'static str> {
     let ptr: *const c_char = get(mib)?;
     let cstr = CStr::from_ptr(ptr);
-    cstr.to_str().map_err(|e| {
-        io::Error::new(io::ErrorKind::InvalidData, e)
-    })
+    cstr.to_str()
+        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
 }
 
 unsafe fn get_set<T>(mib: &[usize], mut value: T) -> io::Result<T> {
