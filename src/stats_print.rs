@@ -16,12 +16,12 @@ pub struct Options {
     /// If set, information that never changes during execution will be skipped.
     ///
     /// This corresponds to the `g` character.
-    pub skip_constant: bool,
+    pub skip_constants: bool,
 
     /// If set, merged information about arenas will be skipped.
     ///
     /// This corresponds to the `m` character.
-    pub skip_merged_arena: bool,
+    pub skip_merged_arenas: bool,
 
     /// If set, information about individual arenas will be skipped.
     ///
@@ -80,11 +80,11 @@ where
         };
         let mut opts = [0; 6];
         let mut i = 0;
-        if options.skip_constant {
+        if options.skip_constants{
             opts[i] = b'g' as c_char;
             i += 1;
         }
-        if options.skip_merged_arena {
+        if options.skip_merged_arenas {
             opts[i] = b'm' as c_char;
             i += 1;
         }
@@ -118,6 +118,21 @@ mod test {
     fn basic() {
         let mut buf = vec![];
         stats_print(&mut buf, Options::default()).unwrap();
+        println!("{}", String::from_utf8(buf).unwrap());
+    }
+
+    #[test]
+    fn all_options() {
+        let mut buf = vec![];
+        let options = Options {
+            skip_constants: true,
+            skip_merged_arenas: true,
+            skip_per_arena: true,
+            skip_bin_size_classes: true,
+            skip_large_size_classes: true,
+            ..Options::default()
+        };
+        stats_print(&mut buf, options).unwrap();
         println!("{}", String::from_utf8(buf).unwrap());
     }
 }
