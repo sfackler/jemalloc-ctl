@@ -1,7 +1,7 @@
 //! Thread specific operations.
 use std::io;
 
-use {name_to_mib, get};
+use {name_to_mib, get_mib};
 
 /// A type providing access to the total number of bytes allocated by the current thread.
 ///
@@ -49,7 +49,7 @@ impl Allocated {
     /// Returns a thread-local pointer to the total number of bytes allocated by this thread.
     pub fn get(&self) -> io::Result<ThreadLocal<u64>> {
         unsafe {
-            let ptr = get::<*mut u64>(&self.0)?;
+            let ptr = get_mib::<*mut u64>(&self.0)?;
             Ok(ThreadLocal(ptr))
         }
     }
@@ -95,7 +95,7 @@ impl Deallocated {
     /// Returns a thread-local pointer to the total number of bytes deallocated by this thread.
     pub fn get(&self) -> io::Result<ThreadLocal<u64>> {
         unsafe {
-            let ptr = get::<*mut u64>(&self.0)?;
+            let ptr = get_mib::<*mut u64>(&self.0)?;
             Ok(ThreadLocal(ptr))
         }
     }

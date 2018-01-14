@@ -4,7 +4,7 @@
 use std::io;
 use std::os::raw::c_uint;
 
-use {name_to_mib, get_str, get};
+use {name_to_mib, get_str_mib, get_mib};
 
 /// A type providing access to the dss (`sbrk(2)`) allocation precedence as related to `mmap(2)`
 /// allocation.
@@ -37,7 +37,7 @@ impl Dss {
 
     /// Returns the dss allocation precedence.
     pub fn get(&self) -> io::Result<&'static str> {
-        unsafe { get_str(&self.0) }
+        unsafe { get_str_mib(&self.0) }
     }
 }
 
@@ -70,6 +70,6 @@ impl NArenas {
 
     /// Returns the maximum number of arenas.
     pub fn get(&self) -> io::Result<c_uint> {
-        unsafe { get(&self.0) }
+        unsafe { get_mib(&self.0) }
     }
 }

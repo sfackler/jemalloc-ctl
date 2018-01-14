@@ -7,7 +7,7 @@
 
 use std::io;
 
-use {get, name_to_mib};
+use {get_mib, name_to_mib};
 
 /// A type providing access to the total number of bytes allocated by the application.
 ///
@@ -48,7 +48,7 @@ impl Allocated {
 
     /// Returns the total number of bytes allocated by the application.
     pub fn get(&self) -> io::Result<usize> {
-        unsafe { get(&self.0) }
+        unsafe { get_mib(&self.0) }
     }
 }
 
@@ -96,7 +96,7 @@ impl Active {
 
     /// Returns the total number of bytes in active pages allocated by the application.
     pub fn get(&self) -> io::Result<usize> {
-        unsafe { get(&self.0) }
+        unsafe { get_mib(&self.0) }
     }
 }
 
@@ -137,7 +137,7 @@ impl Metadata {
 
     /// Returns the total number of bytes dedicated to jemalloc metadata.
     pub fn get(&self) -> io::Result<usize> {
-        unsafe { get(&self.0) }
+        unsafe { get_mib(&self.0) }
     }
 }
 
@@ -186,7 +186,7 @@ impl Resident {
 
     /// Returns the total number of bytes in physically resident data pages mapped by the allocator.
     pub fn get(&self) -> io::Result<usize> {
-        unsafe { get(&self.0) }
+        unsafe { get_mib(&self.0) }
     }
 }
 
@@ -233,6 +233,6 @@ impl Mapped {
 
     /// Returns the total number of bytes in active extents mapped by the allocator.
     pub fn get(&self) -> io::Result<usize> {
-        unsafe { get(&self.0) }
+        unsafe { get_mib(&self.0) }
     }
 }

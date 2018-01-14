@@ -1,7 +1,7 @@
 //! Information about the jemalloc compile-time configuration
 use std::io;
 
-use {name_to_mib, get_str};
+use {name_to_mib, get_str_mib};
 
 /// A type providing access to the embedded configure-time-specified run-time options config.
 ///
@@ -31,6 +31,6 @@ impl MallocConf {
 
     /// Returns the embedded configure-time-specified run-time options config.
     pub fn get(&self) -> io::Result<&'static str> {
-        unsafe { get_str(&self.0) }
+        unsafe { get_str_mib(&self.0) }
     }
 }

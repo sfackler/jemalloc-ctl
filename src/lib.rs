@@ -97,7 +97,7 @@ unsafe fn name_to_mib(name: &str, mib: &mut [usize]) -> io::Result<()> {
     Ok(())
 }
 
-unsafe fn get<T>(mib: &[usize]) -> io::Result<T> {
+unsafe fn get_mib<T>(mib: &[usize]) -> io::Result<T> {
     let mut value = mem::uninitialized::<T>();
     let mut len = mem::size_of::<T>();
     cvt(mallctlbymib(
@@ -112,14 +112,14 @@ unsafe fn get<T>(mib: &[usize]) -> io::Result<T> {
     Ok(value)
 }
 
-unsafe fn get_str(mib: &[usize]) -> io::Result<&'static str> {
-    let ptr: *const c_char = get(mib)?;
+unsafe fn get_str_mib(mib: &[usize]) -> io::Result<&'static str> {
+    let ptr: *const c_char = get_mib(mib)?;
     let cstr = CStr::from_ptr(ptr);
     cstr.to_str()
         .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
 }
 
-unsafe fn get_set<T>(mib: &[usize], mut value: T) -> io::Result<T> {
+unsafe fn get_set_mib<T>(mib: &[usize], mut value: T) -> io::Result<T> {
     let mut len = mem::size_of::<T>();
     cvt(mallctlbymib(
         mib.as_ptr(),
@@ -176,7 +176,7 @@ impl Epoch {
     /// The epoch advances by 1 every time it is advanced, so the value can be used to determine if
     /// another thread triggered a referesh.
     pub fn advance(&self) -> io::Result<u64> {
-        unsafe { get_set(&self.0, 1) }
+        unsafe { get_set_mib(&self.0, 1) }
     }
 }
 
@@ -209,6 +209,6 @@ impl Version {
 
     /// Returns the jemalloc version string.
     pub fn get(&self) -> io::Result<&'static str> {
-        unsafe { get_str(&self.0) }
+        unsafe { get_str_mib(&self.0) }
     }
 }

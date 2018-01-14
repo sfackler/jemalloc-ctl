@@ -2,7 +2,7 @@
 use std::io;
 use std::os::raw::c_uint;
 
-use {name_to_mib, get};
+use {name_to_mib, get_mib};
 
 /// A type providing access to the current limit on the number of arenas.
 ///
@@ -30,6 +30,6 @@ impl NArenas {
 
     /// Returns the maximum number of arenas.
     pub fn get(&self) -> io::Result<c_uint> {
-        unsafe { get(&self.0) }
+        unsafe { get_mib(&self.0) }
     }
 }
