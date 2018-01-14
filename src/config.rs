@@ -1,7 +1,23 @@
 //! Information about the jemalloc compile-time configuration
 use std::io;
+use std::os::raw::c_char;
 
-use {name_to_mib, get_str};
+use {get_str, get_str_mib, name_to_mib};
+
+const MALLOC_CONF: *const c_char = b"config.malloc_conf\0" as *const _ as *const _;
+
+/// Returns the embeddec configure-time-specified run-time options config.
+///
+/// The string will be empty unless `--with-malloc-conf` was specified during build configuration.
+///
+/// # Examples
+///
+/// ```
+/// println!("default malloc conf: {}", jemalloc_ctl::config::malloc_conf().unwrap());
+/// ```
+pub fn malloc_conf() -> io::Result<&'static str> {
+    unsafe { get_str(MALLOC_CONF) }
+}
 
 /// A type providing access to the embedded configure-time-specified run-time options config.
 ///
@@ -24,13 +40,13 @@ impl MallocConf {
     pub fn new() -> io::Result<MallocConf> {
         unsafe {
             let mut mib = [0; 2];
-            name_to_mib("config.malloc_conf\0", &mut mib)?;
+            name_to_mib(MALLOC_CONF, &mut mib)?;
             Ok(MallocConf(mib))
         }
     }
 
     /// Returns the embedded configure-time-specified run-time options config.
     pub fn get(&self) -> io::Result<&'static str> {
-        unsafe { get_str(&self.0) }
+        unsafe { get_str_mib(&self.0) }
     }
 }

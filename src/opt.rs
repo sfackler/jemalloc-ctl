@@ -2,9 +2,26 @@
 //!
 //! These settings are controlled by the `MALLOC_CONF` environment variable.
 use std::io;
-use std::os::raw::c_uint;
+use std::os::raw::{c_char, c_uint};
 
-use {name_to_mib, get_str, get};
+use {get, get_mib, get_str, get_str_mib, name_to_mib};
+
+const DSS: *const c_char = b"opt.dss\0" as *const _ as *const _;
+
+/// Returns the dss (`sbrk(2)`) allocation precedence as related to `mmap(2)` allocation.
+///
+/// The following settings are supported if `sbrk(2)` is supported by the operating system:
+/// "disabled", "primary", and "secondary"; otherwise only "disabled" is supported. The default is
+/// "secondary" if `sbrk(2)` is supported by the operating system; "disabled" otherwise.
+///
+/// # Examples
+///
+/// ```
+/// println!("dss priority: {}", jemalloc_ctl::opt::dss().unwrap());
+/// ```
+pub fn dss() -> io::Result<&'static str> {
+    unsafe { get_str(DSS) }
+}
 
 /// A type providing access to the dss (`sbrk(2)`) allocation precedence as related to `mmap(2)`
 /// allocation.
@@ -30,15 +47,30 @@ impl Dss {
     pub fn new() -> io::Result<Dss> {
         unsafe {
             let mut mib = [0; 2];
-            name_to_mib("opt.dss\0", &mut mib)?;
+            name_to_mib(DSS, &mut mib)?;
             Ok(Dss(mib))
         }
     }
 
     /// Returns the dss allocation precedence.
     pub fn get(&self) -> io::Result<&'static str> {
-        unsafe { get_str(&self.0) }
+        unsafe { get_str_mib(&self.0) }
     }
+}
+
+const NARENAS: *const c_char = b"opt.narenas\0" as *const _ as *const _;
+
+/// Returns the maximum number of arenas to use for automatic multiplexing of threads and arenas.
+///
+/// The default is four times the number of CPUs, or one if there is a single CPU.
+///
+/// # Examples
+///
+/// ```
+/// println!("number of arenas: {}", jemalloc_ctl::opt::narenas().unwrap());
+/// ```
+pub fn narenas() -> io::Result<c_uint> {
+    unsafe { get(NARENAS) }
 }
 
 /// A type providing access to the maximum number of arenas to use for automatic multiplexing of
@@ -63,13 +95,13 @@ impl NArenas {
     pub fn new() -> io::Result<NArenas> {
         unsafe {
             let mut mib = [0; 2];
-            name_to_mib("opt.narenas\0", &mut mib)?;
+            name_to_mib(NARENAS, &mut mib)?;
             Ok(NArenas(mib))
         }
     }
 
     /// Returns the maximum number of arenas.
     pub fn get(&self) -> io::Result<c_uint> {
-        unsafe { get(&self.0) }
+        unsafe { get_mib(&self.0) }
     }
 }
