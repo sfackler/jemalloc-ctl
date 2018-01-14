@@ -10,19 +10,13 @@ jemalloc control and introspection.
 ```rust
 use std::thread;
 use std::time::Duration;
-use jemalloc_ctl::Epoch;
-use jemalloc_ctl::stats::{Allocated, Resident};
-
-let epoch = Epoch::new().unwrap();
-let allocated = Allocated::new().unwrap();
-let resident = Resident::new().unwrap();
 
 loop {
     // many statistics are cached and only updated when the epoch is advanced.
-    epoch.advance().unwrap();
+    jemalloc_ctl::epoch().unwrap();
 
-    let allocated = allocated.get().unwrap();
-    let resident = resident.get().unwrap();
+    let allocated = jemalloc_ctl::stats::allocated().unwrap();
+    let resident = jemalloc_ctl::stats::resident().unwrap();
     println!("{} bytes allocated/{} bytes resident", allocated, resident);
     thread::sleep(Duration::from_secs(10));
 }
