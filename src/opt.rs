@@ -105,3 +105,53 @@ impl NArenas {
         unsafe { get_mib(&self.0) }
     }
 }
+
+const LG_TCACHE_MAX: *const c_char = b"opt.lg_tcache_max\0" as *const _ as *const _;
+
+/// Returns the maximum size class (log base 2) to cache in the thread-specific cache (tcache).
+///
+/// At a minimum, all small size classes are cached, and at a maximum all large size classes are
+/// cached. The default maximum is 32 KiB (2^15).
+///
+/// # Examples
+///
+/// ```
+/// println!("max cached allocation size: {}", 1 << jemalloc_ctl::opt::lg_tcache_max().unwrap());
+/// ```
+pub fn lg_tcache_max() -> io::Result<usize> {
+    unsafe { get(LG_TCACHE_MAX) }
+}
+
+/// A type providing access to the maximum size class (log base 2) to cache in the thread-specific
+/// cache (tcache).
+///
+/// At a minimum, all small size classes are cached, and at a maximum all large size classes are
+/// cached. The default maximum is 32 KiB (2^15).
+///
+/// # Examples
+///
+/// ```
+/// use jemalloc_ctl::opt::LgTcacheMax;
+///
+/// let lg_tcache_max = LgTcacheMax::new().unwrap();
+///
+/// println!("max cached allocation size: {}", 1 << lg_tcache_max.get().unwrap());
+/// ```
+#[derive(Copy, Clone)]
+pub struct LgTcacheMax([usize; 2]);
+
+impl LgTcacheMax {
+    /// Returns a new `LgTcacheMax`.
+    pub fn new() -> io::Result<LgTcacheMax> {
+        unsafe {
+            let mut mib = [0; 2];
+            name_to_mib(LG_TCACHE_MAX, &mut mib)?;
+            Ok(LgTcacheMax(mib))
+        }
+    }
+
+    /// Returns the maximum cached size class.
+    pub fn get(&self) -> io::Result<usize> {
+        unsafe { get_mib(&self.0) }
+    }
+}
