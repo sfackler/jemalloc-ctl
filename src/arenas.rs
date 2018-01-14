@@ -1,8 +1,21 @@
 //! Arena operations.
 use std::io;
-use std::os::raw::c_uint;
+use std::os::raw::{c_char, c_uint};
 
-use {name_to_mib, get_mib};
+use {get, get_mib, name_to_mib};
+
+const NARENAS: *const c_char = b"arenas.narenas\0" as *const _ as *const _;
+
+/// Returns the current limit on the number of arenas.
+///
+/// # Examples
+///
+/// ```
+/// println!("number of arenas: {}", jemalloc_ctl::arenas::narenas().unwrap());
+/// ```
+pub fn narenas() -> io::Result<c_uint> {
+    unsafe { get(NARENAS) }
+}
 
 /// A type providing access to the current limit on the number of arenas.
 ///
@@ -23,7 +36,7 @@ impl NArenas {
     pub fn new() -> io::Result<NArenas> {
         unsafe {
             let mut mib = [0; 2];
-            name_to_mib("arenas.narenas\0", &mut mib)?;
+            name_to_mib(NARENAS, &mut mib)?;
             Ok(NArenas(mib))
         }
     }

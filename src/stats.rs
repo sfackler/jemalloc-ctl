@@ -6,8 +6,33 @@
 //! [`Epoch`]: ../struct.Epoch.html
 
 use std::io;
+use std::os::raw::c_char;
 
-use {get_mib, name_to_mib};
+use {get, get_mib, name_to_mib};
+
+const ALLOCATED: *const c_char = b"stats.allocated\0" as *const _ as *const _;
+
+/// Returns the total number of bytes allocated by the application.
+///
+/// This statistic is cached, and is only refreshed when the epoch is advanced. See the [`epoch`]
+/// function for more information.
+///
+/// This corresponds to `stats.allocated` in jemalloc's API.
+///
+/// # Examples
+///
+/// ```
+/// let a = jemalloc_ctl::stats::allocated().unwrap();
+/// let _buf = vec![0; 1024 * 1024];
+/// jemalloc_ctl::epoch().unwrap();
+/// let b = jemalloc_ctl::stats::allocated().unwrap();
+/// assert!(a < b);
+/// ```
+///
+/// [`epoch`]: ../fn.epoch().html
+pub fn allocated() -> io::Result<usize> {
+    unsafe { get(ALLOCATED) }
+}
 
 /// A type providing access to the total number of bytes allocated by the application.
 ///
@@ -41,7 +66,7 @@ impl Allocated {
     pub fn new() -> io::Result<Allocated> {
         let mut mib = [0; 2];
         unsafe {
-            name_to_mib("stats.allocated\0", &mut mib)?;
+            name_to_mib(ALLOCATED, &mut mib)?;
         }
         Ok(Allocated(mib))
     }
@@ -50,6 +75,34 @@ impl Allocated {
     pub fn get(&self) -> io::Result<usize> {
         unsafe { get_mib(&self.0) }
     }
+}
+
+const ACTIVE: *const c_char = b"stats.active\0" as *const _ as *const _;
+
+/// Returns the total number of bytes in active pages allocated by the application.
+///
+/// This is a multiple of the page size, and is greater than or equal to the value returned by
+/// [`allocated`].
+///
+/// This statistic is cached, and is only refreshed when the epoch is advanced. See the [`epoch`]
+/// type for more information.
+///
+/// This corresponds to `stats.active` in jemalloc's API.
+///
+/// # Examples
+///
+/// ```
+/// let a = jemalloc_ctl::stats::active().unwrap();
+/// let _buf = vec![0; 1024 * 1024];
+/// jemalloc_ctl::epoch().unwrap();
+/// let b = jemalloc_ctl::stats::active().unwrap();
+/// assert!(a < b);
+/// ```
+///
+/// [`epoch`]: ../fn.epoch().html
+/// [`allocated`]: fn.allocated.hml
+pub fn active() -> io::Result<usize> {
+    unsafe { get(ACTIVE) }
 }
 
 /// A type providing access to the total number of bytes in active pages allocated by the
@@ -89,7 +142,7 @@ impl Active {
     pub fn new() -> io::Result<Active> {
         let mut mib = [0; 2];
         unsafe {
-            name_to_mib("stats.active\0", &mut mib)?;
+            name_to_mib(ACTIVE, &mut mib)?;
         }
         Ok(Active(mib))
     }
@@ -98,6 +151,27 @@ impl Active {
     pub fn get(&self) -> io::Result<usize> {
         unsafe { get_mib(&self.0) }
     }
+}
+
+const METADATA: *const c_char = b"stats.metadata\0" as *const _ as *const _;
+
+/// Returns the total number of bytes dedicated to jemalloc metadata.
+///
+/// This statistic is cached, and is only refreshed when the epoch is advanced. See the [`epoch`]
+/// function for more information.
+///
+/// This corresponds to `stats.metadata` in jemalloc's API.
+///
+/// # Examples
+///
+/// ```
+/// jemalloc_ctl::epoch().unwrap();
+/// println!("{} bytes of jemalloc metadata", jemalloc_ctl::stats::metadata().unwrap());
+/// ```
+///
+/// [`epoch`]: ../fn.epoch.html
+pub fn metadata() -> io::Result<usize> {
+    unsafe { get(METADATA) }
 }
 
 /// A type providing access to the total number of bytes dedicated to jemalloc metadata.
@@ -130,7 +204,7 @@ impl Metadata {
     pub fn new() -> io::Result<Metadata> {
         let mut mib = [0; 2];
         unsafe {
-            name_to_mib("stats.metadata\0", &mut mib)?;
+            name_to_mib(METADATA, &mut mib)?;
         }
         Ok(Metadata(mib))
     }
@@ -139,6 +213,34 @@ impl Metadata {
     pub fn get(&self) -> io::Result<usize> {
         unsafe { get_mib(&self.0) }
     }
+}
+
+const RESIDENT: *const c_char = b"stats.resident\0" as *const _ as *const _;
+
+/// Returns the total number of bytes in physically resident data pages mapped by the allocator.
+///
+/// This consists of all pages dedicated to allocator metadata, pages backing active allocations,
+/// and unused dirty pages. It may overestimate the true value because pages may not actually be
+/// physically resident if they correspond to demand-zeroed virtual memory that has not yet been
+/// touched. This is a multiple of the page size, and is larger than the value returned by
+/// [`active`].
+///
+/// This statistic is cached, and is only refreshed when the epoch is advanced. See the [`epoch`]
+/// function for more information.
+///
+/// This corresponds to `stats.resident` in jemalloc's API.
+///
+/// # Examples
+///
+/// ```
+/// jemalloc_ctl::epoch().unwrap();
+/// println!("{} bytes of total resident data", jemalloc_ctl::stats::resident().unwrap());
+/// ```
+///
+/// [`epoch`]: ../fn.epoch.html
+/// [`active`]: fn.active.html
+pub fn resident() -> io::Result<usize> {
+    unsafe { get(RESIDENT) }
 }
 
 /// A type providing access to the total number of bytes in physically resident data pages mapped
@@ -179,7 +281,7 @@ impl Resident {
     pub fn new() -> io::Result<Resident> {
         let mut mib = [0; 2];
         unsafe {
-            name_to_mib("stats.resident\0", &mut mib)?;
+            name_to_mib(RESIDENT, &mut mib)?;
         }
         Ok(Resident(mib))
     }
@@ -188,6 +290,33 @@ impl Resident {
     pub fn get(&self) -> io::Result<usize> {
         unsafe { get_mib(&self.0) }
     }
+}
+
+const MAPPED: *const c_char = b"stats.mapped\0" as *const _ as *const _;
+
+/// Returns the total number of bytes in active extents mapped by the allocator.
+///
+/// This does not include inactive extents, even those taht contain unused dirty pages, so there
+/// is no strict ordering between this and the value returned by [`resident`]. This is a
+/// multiple of the page size, and is larger than the value returned by [`active`].
+///
+/// This statistic is cached, and is only refreshed when the epoch is advanced. See the [`epoch`]
+/// type for more information.
+///
+/// This corresponds to `stats.mapped` in jemalloc's API.
+///
+/// # Examples
+///
+/// ```
+/// jemalloc_ctl::epoch().unwrap();
+/// println!("{} bytes of total mapped data", jemalloc_ctl::stats::mapped().unwrap());
+/// ```
+///
+/// [`epoch`]: ../fn.epoch.html
+/// [`resident`]: fn.resident.html
+/// [`active`]: fn.active.html
+pub fn mapped() -> io::Result<usize> {
+    unsafe { get(MAPPED) }
 }
 
 /// A type providing access to the total number of bytes in active extents mapped by the allocator.
@@ -226,7 +355,7 @@ impl Mapped {
     pub fn new() -> io::Result<Mapped> {
         let mut mib = [0; 2];
         unsafe {
-            name_to_mib("stats.mapped\0", &mut mib)?;
+            name_to_mib(MAPPED, &mut mib)?;
         }
         Ok(Mapped(mib))
     }
