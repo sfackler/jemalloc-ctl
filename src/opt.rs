@@ -4,7 +4,7 @@
 use std::io;
 use std::os::raw::{c_char, c_uint};
 
-use {get, get_mib, get_str, get_str_mib, name_to_mib};
+use {get, get_bool, get_bool_mib, get_mib, get_str, get_str_mib, name_to_mib};
 
 const ABORT: *const c_char = b"opt.abort\0" as *const _ as *const _;
 
@@ -18,7 +18,7 @@ const ABORT: *const c_char = b"opt.abort\0" as *const _ as *const _;
 /// println!("abort on warning: {}", jemalloc_ctl::opt::abort().unwrap());
 /// ```
 pub fn abort() -> io::Result<bool> {
-    unsafe { get::<u8>(ABORT).map(|c| c != 1) }
+    unsafe { get_bool(ABORT) }
 }
 
 /// A type determining if jemalloc will call `abort(3)` on most warnings.
@@ -48,7 +48,7 @@ impl Abort {
 
     /// Returns the abort-on-warning behavior.
     pub fn get(&self) -> io::Result<bool> {
-        unsafe { get_mib::<u8>(&self.0).map(|c| c != 0) }
+        unsafe { get_bool_mib(&self.0) }
     }
 }
 
@@ -156,12 +156,14 @@ const JUNK: *const c_char = b"opt.junk\0" as *const _ as *const _;
 
 /// Returns jemalloc's junk filling mode.
 ///
+/// Requires `--enable-fill` to have been specified during build configuration.
+///
 /// If set to "alloc", each byte of uninitialized allocated memory will be set to `0x5a`. If set to
 /// "free", each byte of deallocated memory will be set to `0x5a`. If set to "true", both allocated
 /// and deallocated memory will be initialized, and if set to "false" junk filling will be disabled.
 /// This is intended for debugging and will impact performance negatively.
 ///
-/// The default is "false", unless `--enable-debug` is specified during build configuration, in
+/// The default is "false", unless `--enable-debug` was specified during build configuration, in
 /// which case the default is "true".
 ///
 /// # Examples
@@ -175,12 +177,14 @@ pub fn junk() -> io::Result<&'static str> {
 
 /// A type providing access to jemalloc's junk filling mode.
 ///
+/// Requires `--enable-fill` to have been specified during build configuration.
+///
 /// If set to "alloc", each byte of uninitialized allocated memory will be set to `0x5a`. If set to
 /// "free", each byte of deallocated memory will be set to `0x5a`. If set to "true", both allocated
 /// and deallocated memory will be initialized, and if set to "false" junk filling will be disabled.
 /// This is intended for debugging and will impact performance negatively.
 ///
-/// The default is "false", unless `--enable-debug` is specified during build configuration, in
+/// The default is "false", unless `--enable-debug` was specified during build configuration, in
 /// which case the default is "true".
 ///
 /// # Examples
@@ -208,6 +212,58 @@ impl Junk {
     /// Returns jemalloc's junk filling mode.
     pub fn get(&self) -> io::Result<&'static str> {
         unsafe { get_str_mib(&self.0) }
+    }
+}
+
+const ZERO: *const c_char = b"opt.zero\0" as *const _ as *const _;
+
+/// Returns jemalloc's zeroing behavior.
+///
+/// Requires `--enable-fill` to have been specified during build configuration.
+///
+/// If enabled, jemalloc will initialize each byte of uninitialized allocated memory to 0. This is
+/// intended for debugging and will impact performance negatively. It is disabled by default.
+///
+/// # Examples
+///
+/// ```
+/// println!("zeroing: {}", jemalloc_ctl::opt::zero().unwrap());
+/// ```
+pub fn zero() -> io::Result<bool> {
+    unsafe { get_bool(ZERO) }
+}
+
+/// A type providing access to jemalloc's zeroing behavior.
+///
+/// Requires `--enable-fill` to have been specified during build configuration.
+///
+/// If enabled, jemalloc will initialize each byte of uninitialized allocated memory to 0. This is
+/// intended for debugging and will impact performance negatively. It is disabled by default.
+///
+/// # Examples
+///
+/// ```
+/// use jemalloc_ctl::opt::Zero;
+///
+/// let zero = Zero::new().unwrap();
+///
+/// println!("zeroing: {}", zero.get().unwrap());
+/// ```
+pub struct Zero([usize; 2]);
+
+impl Zero {
+    /// Returns a new `Zero`.
+    pub fn new() -> io::Result<Zero> {
+        unsafe {
+            let mut mib = [0; 2];
+            name_to_mib(ZERO, &mut mib)?;
+            Ok(Zero(mib))
+        }
+    }
+
+    /// Returns the jemalloc zeroing behavior.
+    pub fn get(&self) -> io::Result<bool> {
+        unsafe { get_bool_mib(&self.0) }
     }
 }
 

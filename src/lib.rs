@@ -142,6 +142,14 @@ unsafe fn get_str(name: *const c_char) -> io::Result<&'static str> {
         .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
 }
 
+unsafe fn get_bool_mib(mib: &[usize]) -> io::Result<bool> {
+    get_mib::<u8>(mib).map(|c| c != 0)
+}
+
+unsafe fn get_bool(name: *const c_char) -> io::Result<bool> {
+    get::<u8>(name).map(|c| c != 0)
+}
+
 unsafe fn get_set_mib<T>(mib: &[usize], mut value: T) -> io::Result<T> {
     let mut len = mem::size_of::<T>();
     cvt(mallctlbymib(
