@@ -6,6 +6,52 @@ use std::os::raw::{c_char, c_uint};
 
 use {get, get_mib, get_str, get_str_mib, name_to_mib};
 
+const ABORT: *const c_char = b"opt.abort\0" as *const _ as *const _;
+
+/// Determines if jemalloc will call `abort(3)` on most warnings.
+///
+/// This is disabled by default unless `--enable-debug` was specified during build configuration.
+///
+/// # Examples
+///
+/// ```
+/// println!("abort on warning: {}", jemalloc_ctl::opt::abort().unwrap());
+/// ```
+pub fn abort() -> io::Result<bool> {
+    unsafe { get::<u8>(ABORT).map(|c| c != 1) }
+}
+
+/// A type determining if jemalloc will call `abort(3)` on most warnings.
+///
+/// This is disabled by default unless `--enable-debug` was specified during build configuration.
+///
+/// # Examples
+///
+/// ```
+/// use jemalloc_ctl::opt::Abort;
+///
+/// let abort = Abort::new().unwrap();
+///
+/// println!("abort on warning: {}", abort.get().unwrap());
+/// ```
+pub struct Abort([usize; 2]);
+
+impl Abort {
+    /// Returns a new `Abort`.
+    pub fn new() -> io::Result<Abort> {
+        unsafe {
+            let mut mib = [0; 2];
+            name_to_mib(ABORT, &mut mib)?;
+            Ok(Abort(mib))
+        }
+    }
+
+    /// Returns the abort-on-warning behavior.
+    pub fn get(&self) -> io::Result<bool> {
+        unsafe { get_mib::<u8>(&self.0).map(|c| c != 0) }
+    }
+}
+
 const DSS: *const c_char = b"opt.dss\0" as *const _ as *const _;
 
 /// Returns the dss (`sbrk(2)`) allocation precedence as related to `mmap(2)` allocation.
