@@ -267,6 +267,54 @@ impl Zero {
     }
 }
 
+const TCACHE: *const c_char = b"opt.tcache\0" as *const _ as *const _;
+
+/// Determines if thread-local allocation caching is enabled.
+///
+/// Thread-specific caching allows many allocations to be satisfied without performing any thread
+/// synchronization, at the cost of increased memory use. This is enabled by default.
+///
+/// # Examples
+///
+/// ```
+/// println!("thread-local caching: {}", jemalloc_ctl::opt::tcache().unwrap());
+/// ```
+pub fn tcache() -> io::Result<bool> {
+    unsafe { get_bool(TCACHE) }
+}
+
+/// A type providing access to thread-local allocation caching behavior.
+///
+/// Thread-specific caching allows many allocations to be satisfied without performing any thread
+/// synchronization, at the cost of increased memory use. This is enabled by default.
+///
+/// # Examples
+///
+/// ```
+/// use jemalloc_ctl::opt::Tcache;
+///
+/// let tcache = Tcache::new().unwrap();
+///
+/// println!("thread-local caching: {}", tcache.get().unwrap());
+/// ```
+pub struct Tcache([usize; 2]);
+
+impl Tcache {
+    /// Returns a new `Tcache`.
+    pub fn new() -> io::Result<Tcache> {
+        unsafe {
+            let mut mib = [0; 2];
+            name_to_mib(TCACHE, &mut mib)?;
+            Ok(Tcache(mib))
+        }
+    }
+
+    /// Returns the thread-local caching behavior.
+    pub fn get(&self) -> io::Result<bool> {
+        unsafe { get_bool_mib(&self.0) }
+    }
+}
+
 const LG_TCACHE_MAX: *const c_char = b"opt.lg_tcache_max\0" as *const _ as *const _;
 
 /// Returns the maximum size class (log base 2) to cache in the thread-specific cache (tcache).
