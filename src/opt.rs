@@ -152,6 +152,65 @@ impl NArenas {
     }
 }
 
+const JUNK: *const c_char = b"opt.junk\0" as *const _ as *const _;
+
+/// Returns jemalloc's junk filling mode.
+///
+/// If set to "alloc", each byte of uninitialized allocated memory will be set to `0x5a`. If set to
+/// "free", each byte of deallocated memory will be set to `0x5a`. If set to "true", both allocated
+/// and deallocated memory will be initialized, and if set to "false" junk filling will be disabled.
+/// This is intended for debugging and will impact performance negatively.
+///
+/// The default is "false", unless `--enable-debug` is specified during build configuration, in
+/// which case the default is "true".
+///
+/// # Examples
+///
+/// ```
+/// println!("junk filling: {}", jemalloc_ctl::opt::junk().unwrap());
+/// ```
+pub fn junk() -> io::Result<&'static str> {
+    unsafe { get_str(JUNK) }
+}
+
+/// A type providing access to jemalloc's junk filling mode.
+///
+/// If set to "alloc", each byte of uninitialized allocated memory will be set to `0x5a`. If set to
+/// "free", each byte of deallocated memory will be set to `0x5a`. If set to "true", both allocated
+/// and deallocated memory will be initialized, and if set to "false" junk filling will be disabled.
+/// This is intended for debugging and will impact performance negatively.
+///
+/// The default is "false", unless `--enable-debug` is specified during build configuration, in
+/// which case the default is "true".
+///
+/// # Examples
+///
+/// ```
+/// use jemalloc_ctl::opt::Junk;
+///
+/// let junk = Junk::new().unwrap();
+///
+/// println!("junk filling: {}", junk.get().unwrap());
+/// ```
+#[derive(Copy, Clone)]
+pub struct Junk([usize; 2]);
+
+impl Junk {
+    /// Returns a new `Junk`.
+    pub fn new() -> io::Result<Junk> {
+        unsafe {
+            let mut mib = [0; 2];
+            name_to_mib(JUNK, &mut mib)?;
+            Ok(Junk(mib))
+        }
+    }
+
+    /// Returns jemalloc's junk filling mode.
+    pub fn get(&self) -> io::Result<&'static str> {
+        unsafe { get_str_mib(&self.0) }
+    }
+}
+
 const LG_TCACHE_MAX: *const c_char = b"opt.lg_tcache_max\0" as *const _ as *const _;
 
 /// Returns the maximum size class (log base 2) to cache in the thread-specific cache (tcache).
