@@ -80,7 +80,7 @@ where
         };
         let mut opts = [0; 6];
         let mut i = 0;
-        if options.skip_constants{
+        if options.skip_constants {
             opts[i] = b'g' as c_char;
             i += 1;
         }
@@ -102,7 +102,11 @@ where
         }
         opts[i] = 0;
 
-        malloc_stats_print(Some(callback::<W>), &mut state as *mut _ as *mut c_void, opts.as_ptr());
+        malloc_stats_print(
+            Some(callback::<W>),
+            &mut state as *mut _ as *mut c_void,
+            opts.as_ptr(),
+        );
         if let Err(e) = state.panic {
             panic::resume_unwind(e);
         }

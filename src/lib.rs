@@ -60,11 +60,11 @@
 //! ```
 #![doc(html_root_url = "https://docs.rs/jemalloc-ctl/0.1")]
 #![warn(missing_docs)]
-use std::os::raw::{c_char, c_int, c_void};
+use std::ffi::CStr;
 use std::io;
 use std::mem;
+use std::os::raw::{c_char, c_int, c_void};
 use std::ptr;
-use std::ffi::CStr;
 
 pub mod arenas;
 pub mod config;
@@ -74,14 +74,30 @@ pub mod stats_print;
 pub mod thread;
 
 extern "C" {
-    #[cfg_attr(any(target_os = "macos", target_os = "android", target_os = "ios",
-                   target_os = "dragonfly", target_os = "windows", target_env = "musl"),
-               link_name = "je_mallctlnametomib")]
+    #[cfg_attr(
+        any(
+            target_os = "macos",
+            target_os = "android",
+            target_os = "ios",
+            target_os = "dragonfly",
+            target_os = "windows",
+            target_env = "musl"
+        ),
+        link_name = "je_mallctlnametomib"
+    )]
     fn mallctlnametomib(name: *const c_char, mibp: *mut usize, miblenp: *mut usize) -> c_int;
 
-    #[cfg_attr(any(target_os = "macos", target_os = "android", target_os = "ios",
-                   target_os = "dragonfly", target_os = "windows", target_env = "musl"),
-               link_name = "je_mallctlbymib")]
+    #[cfg_attr(
+        any(
+            target_os = "macos",
+            target_os = "android",
+            target_os = "ios",
+            target_os = "dragonfly",
+            target_os = "windows",
+            target_env = "musl"
+        ),
+        link_name = "je_mallctlbymib"
+    )]
     fn mallctlbymib(
         mib: *const usize,
         miblen: usize,
@@ -91,9 +107,17 @@ extern "C" {
         newlen: usize,
     ) -> c_int;
 
-    #[cfg_attr(any(target_os = "macos", target_os = "android", target_os = "ios",
-                   target_os = "dragonfly", target_os = "windows", target_env = "musl"),
-               link_name = "je_mallctl")]
+    #[cfg_attr(
+        any(
+            target_os = "macos",
+            target_os = "android",
+            target_os = "ios",
+            target_os = "dragonfly",
+            target_os = "windows",
+            target_env = "musl"
+        ),
+        link_name = "je_mallctl"
+    )]
     fn mallctl(
         name: *const c_char,
         oldp: *mut c_void,
@@ -102,9 +126,17 @@ extern "C" {
         newlen: usize,
     ) -> c_int;
 
-    #[cfg_attr(any(target_os = "macos", target_os = "android", target_os = "ios",
-                   target_os = "dragonfly", target_os = "windows", target_env = "musl"),
-               link_name = "je_malloc_stats_print")]
+    #[cfg_attr(
+        any(
+            target_os = "macos",
+            target_os = "android",
+            target_os = "ios",
+            target_os = "dragonfly",
+            target_os = "windows",
+            target_env = "musl"
+        ),
+        link_name = "je_malloc_stats_print"
+    )]
     fn malloc_stats_print(
         write_cb: Option<unsafe extern "C" fn(*mut c_void, *const c_char)>,
         cbopaque: *mut c_void,
