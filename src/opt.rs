@@ -4,7 +4,7 @@
 use std::io;
 use std::os::raw::{c_char, c_uint};
 
-use {get, get_bool, get_bool_mib, get_mib, get_str, get_str_mib, name_to_mib};
+use {get, get_mib, get_str, get_str_mib, name_to_mib};
 
 const ABORT: *const c_char = b"opt.abort\0" as *const _ as *const _;
 
@@ -18,7 +18,7 @@ const ABORT: *const c_char = b"opt.abort\0" as *const _ as *const _;
 /// println!("abort on warning: {}", jemalloc_ctl::opt::abort().unwrap());
 /// ```
 pub fn abort() -> io::Result<bool> {
-    unsafe { get_bool(ABORT) }
+    unsafe { get(ABORT) }
 }
 
 /// A type determining if jemalloc will call `abort(3)` on most warnings.
@@ -48,7 +48,7 @@ impl Abort {
 
     /// Returns the abort-on-warning behavior.
     pub fn get(&self) -> io::Result<bool> {
-        unsafe { get_bool_mib(&self.0) }
+        unsafe { get_mib(&self.0) }
     }
 }
 
@@ -230,7 +230,7 @@ const ZERO: *const c_char = b"opt.zero\0" as *const _ as *const _;
 /// println!("zeroing: {}", jemalloc_ctl::opt::zero().unwrap());
 /// ```
 pub fn zero() -> io::Result<bool> {
-    unsafe { get_bool(ZERO) }
+    unsafe { get(ZERO) }
 }
 
 /// A type providing access to jemalloc's zeroing behavior.
@@ -263,7 +263,7 @@ impl Zero {
 
     /// Returns the jemalloc zeroing behavior.
     pub fn get(&self) -> io::Result<bool> {
-        unsafe { get_bool_mib(&self.0) }
+        unsafe { get_mib(&self.0) }
     }
 }
 
@@ -280,7 +280,7 @@ const TCACHE: *const c_char = b"opt.tcache\0" as *const _ as *const _;
 /// println!("thread-local caching: {}", jemalloc_ctl::opt::tcache().unwrap());
 /// ```
 pub fn tcache() -> io::Result<bool> {
-    unsafe { get_bool(TCACHE) }
+    unsafe { get(TCACHE) }
 }
 
 /// A type providing access to thread-local allocation caching behavior.
@@ -311,7 +311,7 @@ impl Tcache {
 
     /// Returns the thread-local caching behavior.
     pub fn get(&self) -> io::Result<bool> {
-        unsafe { get_bool_mib(&self.0) }
+        unsafe { get_mib(&self.0) }
     }
 }
 
