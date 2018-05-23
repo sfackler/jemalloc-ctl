@@ -38,6 +38,26 @@
 //!     thread::sleep(Duration::from_secs(10));
 //! }
 //! ```
+//!
+//! Doing the same with the MIB-based API:
+//!
+//! ```no_run
+//! use std::thread;
+//! use std::time::Duration;
+//!
+//! let epoch = jemalloc_ctl::Epoch::new().unwrap();
+//! let allocated = jemalloc_ctl::stats::Allocated::new().unwrap();
+//! let resident = jemalloc_ctl::stats::Resident::new().unwrap();
+//! loop {
+//!     // many statistics are cached and only updated when the epoch is advanced.
+//!     epoch.advance().unwrap();
+//!
+//!     let allocated = allocated.get().unwrap();
+//!     let resident = resident.get().unwrap();
+//!     println!("{} bytes allocated/{} bytes resident", allocated, resident);
+//!     thread::sleep(Duration::from_secs(10));
+//! }
+//! ```
 #![doc(html_root_url = "https://docs.rs/jemalloc-ctl/0.1")]
 #![warn(missing_docs)]
 use std::os::raw::{c_char, c_int, c_void};
