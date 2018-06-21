@@ -36,7 +36,7 @@ jobs:
   stable:
     <<: *JOB
     docker:
-      - image: rust:1.20.0
+      - image: rust:1.26.2-slim
   nightly:
     <<: *JOB
     docker:
