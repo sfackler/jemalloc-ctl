@@ -365,3 +365,75 @@ impl Mapped {
         unsafe { get_mib(&self.0) }
     }
 }
+
+const RETAINED: *const c_char = b"stats.retained\0" as *const _ as *const _;
+
+/// Returns the total number of bytes in virtual memory mappings that were retained rather than being returned to the
+/// operating system via e.g. `munmap(2)`.
+///
+/// Retained virtual memory is typically untouched, decommitted, or purged, so it has no strongly associated physical
+/// memory. Retained memory is excluded from mapped memory statistics, e.g. [`mapped`].
+///
+/// This statistic is cached, and is only refreshed when the epoch is advanced. See the [`epoch`]
+/// type for more information.
+///
+/// This corresponds to `stats.retained` in jemalloc's API.
+///
+/// # Examples
+///
+/// ```
+/// jemalloc_ctl::epoch().unwrap();
+/// println!("{} bytes of total retained data", jemalloc_ctl::stats::retained().unwrap());
+/// ```
+///
+/// [`epoch`]: ../fn.epoch.html
+/// [`mapped`]: fn.mapped.html
+pub fn retained() -> io::Result<usize> {
+    unsafe { get(RETAINED) }
+}
+
+/// A type providing access to the total number of bytes in virtual memory mappings that were retained rather than being
+/// returned to the operating system via e.g. `munmap(2)`.
+///
+/// Retained virtual memory is typically untouched, decommitted, or purged, so it has no strongly associated physical
+/// memory. Retained memory is excluded from mapped memory statistics, e.g. [`Mapped`].
+///
+/// This statistic is cached, and is only refreshed when the epoch is advanced. See the [`Epoch`]
+/// type for more information.
+///
+/// This corresponds to `stats.retained` in jemalloc's API.
+///
+/// # Examples
+///
+/// ```rust
+/// use jemalloc_ctl::Epoch;
+/// use jemalloc_ctl::stats::Retained;
+///
+/// let epoch = Epoch::new().unwrap();
+/// let retained = Retained::new().unwrap();
+///
+/// epoch.advance().unwrap();
+/// let size = retained.get().unwrap();
+/// println!("{} bytes of total retained data", size);
+/// ```
+///
+/// [`Epoch`]: ../struct.Epoch.html
+/// [`Mapped`]: struct.Mapped.html
+#[derive(Copy, Clone)]
+pub struct Retained([usize; 2]);
+
+impl Retained {
+    /// Returns a new `Retained`.
+    pub fn new() -> io::Result<Retained> {
+        let mut mib = [0; 2];
+        unsafe {
+            name_to_mib(RETAINED, &mut mib)?;
+        }
+        Ok(Retained(mib))
+    }
+
+    /// Returns the total number of bytes in virtual memory mappings that were retained.
+    pub fn get(&self) -> io::Result<usize> {
+        unsafe { get_mib(&self.0) }
+    }
+}
