@@ -4,11 +4,6 @@ use std::os::raw::c_char;
 
 use {get, get_mib, name_to_mib};
 
-#[deprecated(note = "renamed to AllocatedP", since = "0.1.3")]
-pub use thread::AllocatedP as Allocated;
-#[deprecated(note = "renamed to DeallocatedP", since = "0.1.3")]
-pub use thread::DeallocatedP as Deallocated;
-
 const ALLOCATEDP: *const c_char = b"thread.allocatedp\0" as *const _ as *const _;
 
 /// Returns a thread-local pointer to the total number of bytes allocated by the current thread.
