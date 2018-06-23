@@ -25,45 +25,72 @@
 //! Repeatedly printing allocation statistics:
 //!
 //! ```no_run
+//! extern crate jemallocator;
+//! extern crate jemalloc_ctl;
+//!
 //! use std::thread;
 //! use std::time::Duration;
 //!
-//! loop {
-//!     // many statistics are cached and only updated when the epoch is advanced.
-//!     jemalloc_ctl::epoch().unwrap();
+//! #[global_allocator]
+//! static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
 //!
-//!     let allocated = jemalloc_ctl::stats::allocated().unwrap();
-//!     let resident = jemalloc_ctl::stats::resident().unwrap();
-//!     println!("{} bytes allocated/{} bytes resident", allocated, resident);
-//!     thread::sleep(Duration::from_secs(10));
+//! fn main() {
+//!     loop {
+//!         // many statistics are cached and only updated when the epoch is advanced.
+//!         jemalloc_ctl::epoch().unwrap();
+//!
+//!         let allocated = jemalloc_ctl::stats::allocated().unwrap();
+//!         let resident = jemalloc_ctl::stats::resident().unwrap();
+//!         println!("{} bytes allocated/{} bytes resident", allocated, resident);
+//!         thread::sleep(Duration::from_secs(10));
+//!     }
 //! }
 //! ```
 //!
 //! Doing the same with the MIB-based API:
 //!
 //! ```no_run
+//! extern crate jemallocator;
+//! extern crate jemalloc_ctl;
+//!
 //! use std::thread;
 //! use std::time::Duration;
 //!
-//! let epoch = jemalloc_ctl::Epoch::new().unwrap();
-//! let allocated = jemalloc_ctl::stats::Allocated::new().unwrap();
-//! let resident = jemalloc_ctl::stats::Resident::new().unwrap();
-//! loop {
-//!     // many statistics are cached and only updated when the epoch is advanced.
-//!     epoch.advance().unwrap();
+//! #[global_allocator]
+//! static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
 //!
-//!     let allocated = allocated.get().unwrap();
-//!     let resident = resident.get().unwrap();
-//!     println!("{} bytes allocated/{} bytes resident", allocated, resident);
-//!     thread::sleep(Duration::from_secs(10));
+//! fn main() {
+//!     let epoch = jemalloc_ctl::Epoch::new().unwrap();
+//!     let allocated = jemalloc_ctl::stats::Allocated::new().unwrap();
+//!     let resident = jemalloc_ctl::stats::Resident::new().unwrap();
+//!     loop {
+//!         // many statistics are cached and only updated when the epoch is advanced.
+//!         epoch.advance().unwrap();
+//!
+//!         let allocated = allocated.get().unwrap();
+//!         let resident = resident.get().unwrap();
+//!         println!("{} bytes allocated/{} bytes resident", allocated, resident);
+//!         thread::sleep(Duration::from_secs(10));
+//!     }
 //! }
 //! ```
 #![doc(html_root_url = "https://docs.rs/jemalloc-ctl/0.1")]
 #![warn(missing_docs)]
+
+extern crate jemalloc_sys;
+extern crate libc;
+
+#[cfg(test)]
+extern crate jemallocator;
+
+#[cfg(test)]
+#[global_allocator]
+static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
+
 use std::ffi::CStr;
 use std::io;
 use std::mem;
-use std::os::raw::{c_char, c_int, c_void};
+use libc::{c_char, c_int};
 use std::ptr;
 
 pub mod arenas;
@@ -73,80 +100,9 @@ pub mod stats;
 pub mod stats_print;
 pub mod thread;
 
-extern "C" {
-    #[cfg_attr(
-        any(
-            target_os = "macos",
-            target_os = "android",
-            target_os = "ios",
-            target_os = "dragonfly",
-            target_os = "windows",
-            target_env = "musl"
-        ),
-        link_name = "je_mallctlnametomib"
-    )]
-    fn mallctlnametomib(name: *const c_char, mibp: *mut usize, miblenp: *mut usize) -> c_int;
-
-    #[cfg_attr(
-        any(
-            target_os = "macos",
-            target_os = "android",
-            target_os = "ios",
-            target_os = "dragonfly",
-            target_os = "windows",
-            target_env = "musl"
-        ),
-        link_name = "je_mallctlbymib"
-    )]
-    fn mallctlbymib(
-        mib: *const usize,
-        miblen: usize,
-        oldp: *mut c_void,
-        oldlenp: *mut usize,
-        newp: *mut c_void,
-        newlen: usize,
-    ) -> c_int;
-
-    #[cfg_attr(
-        any(
-            target_os = "macos",
-            target_os = "android",
-            target_os = "ios",
-            target_os = "dragonfly",
-            target_os = "windows",
-            target_env = "musl"
-        ),
-        link_name = "je_mallctl"
-    )]
-    fn mallctl(
-        name: *const c_char,
-        oldp: *mut c_void,
-        oldlenp: *mut usize,
-        newp: *mut c_void,
-        newlen: usize,
-    ) -> c_int;
-
-    #[cfg_attr(
-        any(
-            target_os = "macos",
-            target_os = "android",
-            target_os = "ios",
-            target_os = "dragonfly",
-            target_os = "windows",
-            target_env = "musl"
-        ),
-        link_name = "je_malloc_stats_print"
-    )]
-    fn malloc_stats_print(
-        write_cb: Option<unsafe extern "C" fn(*mut c_void, *const c_char)>,
-        cbopaque: *mut c_void,
-        opts: *const c_char,
-    );
-}
-
 unsafe fn name_to_mib(name: *const c_char, mib: &mut [usize]) -> io::Result<()> {
     let mut len = mib.len();
-    cvt(mallctlnametomib(name, mib.as_mut_ptr(), &mut len))?;
+    cvt(jemalloc_sys::mallctlnametomib(name, mib.as_mut_ptr(), &mut len))?;
     debug_assert_eq!(mib.len(), len);
     Ok(())
 }
@@ -154,7 +110,7 @@ unsafe fn name_to_mib(name: *const c_char, mib: &mut [usize]) -> io::Result<()> 
 unsafe fn get_mib<T>(mib: &[usize]) -> io::Result<T> {
     let mut value = mem::uninitialized::<T>();
     let mut len = mem::size_of::<T>();
-    cvt(mallctlbymib(
+    cvt(jemalloc_sys::mallctlbymib(
         mib.as_ptr(),
         mib.len(),
         &mut value as *mut _ as *mut _,
@@ -169,7 +125,7 @@ unsafe fn get_mib<T>(mib: &[usize]) -> io::Result<T> {
 unsafe fn get<T>(name: *const c_char) -> io::Result<T> {
     let mut value = mem::uninitialized::<T>();
     let mut len = mem::size_of::<T>();
-    cvt(mallctl(
+    cvt(jemalloc_sys::mallctl(
         name,
         &mut value as *mut _ as *mut _,
         &mut len,
@@ -196,7 +152,7 @@ unsafe fn get_str(name: *const c_char) -> io::Result<&'static str> {
 
 unsafe fn get_set_mib<T>(mib: &[usize], mut value: T) -> io::Result<T> {
     let mut len = mem::size_of::<T>();
-    cvt(mallctlbymib(
+    cvt(jemalloc_sys::mallctlbymib(
         mib.as_ptr(),
         mib.len(),
         &mut value as *mut _ as *mut _,
@@ -210,7 +166,7 @@ unsafe fn get_set_mib<T>(mib: &[usize], mut value: T) -> io::Result<T> {
 
 unsafe fn get_set<T>(name: *const c_char, mut value: T) -> io::Result<T> {
     let mut len = mem::size_of::<T>();
-    cvt(mallctl(
+    cvt(jemalloc_sys::mallctl(
         name,
         &mut value as *mut _ as *mut _,
         &mut len,
@@ -241,9 +197,17 @@ const EPOCH: *const c_char = b"epoch\0" as *const _ as *const _;
 /// Advancing the epoch:
 ///
 /// ```
-/// let a = jemalloc_ctl::epoch().unwrap();
-/// let b = jemalloc_ctl::epoch().unwrap();
-/// assert_eq!(a + 1, b);
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
+///
+/// fn main() {
+///     let a = jemalloc_ctl::epoch().unwrap();
+///     let b = jemalloc_ctl::epoch().unwrap();
+///     assert_eq!(a + 1, b);
+/// }
 /// ```
 pub fn epoch() -> io::Result<u64> {
     unsafe { get_set(EPOCH, 1) }
@@ -259,13 +223,21 @@ pub fn epoch() -> io::Result<u64> {
 /// Advancing the epoch:
 ///
 /// ```
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
 /// use jemalloc_ctl::Epoch;
 ///
-/// let epoch = Epoch::new().unwrap();
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
 ///
-/// let a = epoch.advance().unwrap();
-/// let b = epoch.advance().unwrap();
-/// assert_eq!(a + 1, b);
+/// fn main() {
+///     let epoch = Epoch::new().unwrap();
+///
+///     let a = epoch.advance().unwrap();
+///     let b = epoch.advance().unwrap();
+///     assert_eq!(a + 1, b);
+/// }
 #[derive(Copy, Clone)]
 pub struct Epoch([usize; 1]);
 
@@ -299,7 +271,15 @@ const VERSION: *const c_char = b"version\0" as *const _ as *const _;
 /// # Example
 ///
 /// ```
-/// println!("jemalloc version {}", jemalloc_ctl::version().unwrap());
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
+///
+/// fn main() {
+///     println!("jemalloc version {}", jemalloc_ctl::version().unwrap());
+/// }
 /// ```
 pub fn version() -> io::Result<&'static str> {
     unsafe { get_str(VERSION) }
@@ -307,18 +287,22 @@ pub fn version() -> io::Result<&'static str> {
 
 /// A type providing access to the jemalloc version string.
 ///
-/// # Note
-///
-/// The version of jemalloc currently shipped with the Rust distribution has a bogus version string.
-///
 /// # Example
 ///
 /// ```
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
 /// use jemalloc_ctl::Version;
 ///
-/// let version = Version::new().unwrap();
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
 ///
-/// println!("jemalloc version {}", version.get().unwrap());
+/// fn main() {
+///     let version = Version::new().unwrap();
+///
+///     println!("jemalloc version {}", version.get().unwrap());
+/// }
 #[derive(Copy, Clone)]
 pub struct Version([usize; 1]);
 

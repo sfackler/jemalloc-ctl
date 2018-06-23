@@ -11,7 +11,15 @@ const NARENAS: *const c_char = b"arenas.narenas\0" as *const _ as *const _;
 /// # Examples
 ///
 /// ```
-/// println!("number of arenas: {}", jemalloc_ctl::arenas::narenas().unwrap());
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
+///
+/// fn main() {
+///     println!("number of arenas: {}", jemalloc_ctl::arenas::narenas().unwrap());
+/// }
 /// ```
 pub fn narenas() -> io::Result<c_uint> {
     unsafe { get(NARENAS) }
@@ -22,11 +30,19 @@ pub fn narenas() -> io::Result<c_uint> {
 /// # Examples
 ///
 /// ```
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
 /// use jemalloc_ctl::arenas::NArenas;
 ///
-/// let narenas = NArenas::new().unwrap();
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
 ///
-/// println!("number of arenas: {}", narenas.get().unwrap());
+/// fn main() {
+///     let narenas = NArenas::new().unwrap();
+///
+///     println!("number of arenas: {}", narenas.get().unwrap());
+/// }
 /// ```
 #[derive(Copy, Clone)]
 pub struct NArenas([usize; 2]);

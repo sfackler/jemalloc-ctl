@@ -15,7 +15,15 @@ const ABORT: *const c_char = b"opt.abort\0" as *const _ as *const _;
 /// # Examples
 ///
 /// ```
-/// println!("abort on warning: {}", jemalloc_ctl::opt::abort().unwrap());
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
+///
+/// fn main() {
+///     println!("abort on warning: {}", jemalloc_ctl::opt::abort().unwrap());
+/// }
 /// ```
 pub fn abort() -> io::Result<bool> {
     unsafe { get(ABORT) }
@@ -28,11 +36,19 @@ pub fn abort() -> io::Result<bool> {
 /// # Examples
 ///
 /// ```
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
 /// use jemalloc_ctl::opt::Abort;
 ///
-/// let abort = Abort::new().unwrap();
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
 ///
-/// println!("abort on warning: {}", abort.get().unwrap());
+/// fn main() {
+///     let abort = Abort::new().unwrap();
+///
+///     println!("abort on warning: {}", abort.get().unwrap());
+/// }
 /// ```
 pub struct Abort([usize; 2]);
 
@@ -63,7 +79,15 @@ const DSS: *const c_char = b"opt.dss\0" as *const _ as *const _;
 /// # Examples
 ///
 /// ```
-/// println!("dss priority: {}", jemalloc_ctl::opt::dss().unwrap());
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
+///
+/// fn main() {
+///     println!("dss priority: {}", jemalloc_ctl::opt::dss().unwrap());
+/// }
 /// ```
 pub fn dss() -> io::Result<&'static str> {
     unsafe { get_str(DSS) }
@@ -79,11 +103,19 @@ pub fn dss() -> io::Result<&'static str> {
 /// # Examples
 ///
 /// ```
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
 /// use jemalloc_ctl::opt::Dss;
 ///
-/// let dss = Dss::new().unwrap();
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
 ///
-/// println!("dss priority: {}", dss.get().unwrap());
+/// fn main() {
+///     let dss = Dss::new().unwrap();
+///
+///     println!("dss priority: {}", dss.get().unwrap());
+/// }
 /// ```
 #[derive(Copy, Clone)]
 pub struct Dss([usize; 2]);
@@ -113,7 +145,15 @@ const NARENAS: *const c_char = b"opt.narenas\0" as *const _ as *const _;
 /// # Examples
 ///
 /// ```
-/// println!("number of arenas: {}", jemalloc_ctl::opt::narenas().unwrap());
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
+///
+/// fn main() {
+///     println!("number of arenas: {}", jemalloc_ctl::opt::narenas().unwrap());
+/// }
 /// ```
 pub fn narenas() -> io::Result<c_uint> {
     unsafe { get(NARENAS) }
@@ -127,11 +167,19 @@ pub fn narenas() -> io::Result<c_uint> {
 /// # Examples
 ///
 /// ```
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
 /// use jemalloc_ctl::opt::NArenas;
 ///
-/// let narenas = NArenas::new().unwrap();
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
 ///
-/// println!("number of arenas: {}", narenas.get().unwrap());
+/// fn main() {
+///     let narenas = NArenas::new().unwrap();
+///
+///     println!("number of arenas: {}", narenas.get().unwrap());
+/// }
 /// ```
 #[derive(Copy, Clone)]
 pub struct NArenas([usize; 2]);
@@ -169,7 +217,15 @@ const JUNK: *const c_char = b"opt.junk\0" as *const _ as *const _;
 /// # Examples
 ///
 /// ```
-/// println!("junk filling: {}", jemalloc_ctl::opt::junk().unwrap());
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
+///
+/// fn main() {
+///     println!("junk filling: {}", jemalloc_ctl::opt::junk().unwrap());
+/// }
 /// ```
 pub fn junk() -> io::Result<&'static str> {
     unsafe { get_str(JUNK) }
@@ -190,11 +246,19 @@ pub fn junk() -> io::Result<&'static str> {
 /// # Examples
 ///
 /// ```
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
 /// use jemalloc_ctl::opt::Junk;
 ///
-/// let junk = Junk::new().unwrap();
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
 ///
-/// println!("junk filling: {}", junk.get().unwrap());
+/// fn main() {
+///     let junk = Junk::new().unwrap();
+///
+///     println!("junk filling: {}", junk.get().unwrap());
+/// }
 /// ```
 #[derive(Copy, Clone)]
 pub struct Junk([usize; 2]);
@@ -227,7 +291,15 @@ const ZERO: *const c_char = b"opt.zero\0" as *const _ as *const _;
 /// # Examples
 ///
 /// ```
-/// println!("zeroing: {}", jemalloc_ctl::opt::zero().unwrap());
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
+///
+/// fn main() {
+///     println!("zeroing: {}", jemalloc_ctl::opt::zero().unwrap());
+/// }
 /// ```
 pub fn zero() -> io::Result<bool> {
     unsafe { get(ZERO) }
@@ -243,11 +315,19 @@ pub fn zero() -> io::Result<bool> {
 /// # Examples
 ///
 /// ```
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
 /// use jemalloc_ctl::opt::Zero;
 ///
-/// let zero = Zero::new().unwrap();
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
 ///
-/// println!("zeroing: {}", zero.get().unwrap());
+/// fn main() {
+///     let zero = Zero::new().unwrap();
+///
+///     println!("zeroing: {}", zero.get().unwrap());
+/// }
 /// ```
 pub struct Zero([usize; 2]);
 
@@ -277,7 +357,15 @@ const TCACHE: *const c_char = b"opt.tcache\0" as *const _ as *const _;
 /// # Examples
 ///
 /// ```
-/// println!("thread-local caching: {}", jemalloc_ctl::opt::tcache().unwrap());
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
+///
+/// fn main() {
+///     println!("thread-local caching: {}", jemalloc_ctl::opt::tcache().unwrap());
+/// }
 /// ```
 pub fn tcache() -> io::Result<bool> {
     unsafe { get(TCACHE) }
@@ -291,11 +379,19 @@ pub fn tcache() -> io::Result<bool> {
 /// # Examples
 ///
 /// ```
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
 /// use jemalloc_ctl::opt::Tcache;
 ///
-/// let tcache = Tcache::new().unwrap();
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
 ///
-/// println!("thread-local caching: {}", tcache.get().unwrap());
+/// fn main() {
+///     let tcache = Tcache::new().unwrap();
+///
+///     println!("thread-local caching: {}", tcache.get().unwrap());
+/// }
 /// ```
 pub struct Tcache([usize; 2]);
 
@@ -325,7 +421,15 @@ const LG_TCACHE_MAX: *const c_char = b"opt.lg_tcache_max\0" as *const _ as *cons
 /// # Examples
 ///
 /// ```
-/// println!("max cached allocation size: {}", 1 << jemalloc_ctl::opt::lg_tcache_max().unwrap());
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
+///
+/// fn main() {
+///     println!("max cached allocation size: {}", 1 << jemalloc_ctl::opt::lg_tcache_max().unwrap());
+/// }
 /// ```
 pub fn lg_tcache_max() -> io::Result<usize> {
     unsafe { get(LG_TCACHE_MAX) }
@@ -340,11 +444,19 @@ pub fn lg_tcache_max() -> io::Result<usize> {
 /// # Examples
 ///
 /// ```
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
 /// use jemalloc_ctl::opt::LgTcacheMax;
 ///
-/// let lg_tcache_max = LgTcacheMax::new().unwrap();
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
 ///
-/// println!("max cached allocation size: {}", 1 << lg_tcache_max.get().unwrap());
+/// fn main() {
+///     let lg_tcache_max = LgTcacheMax::new().unwrap();
+///
+///     println!("max cached allocation size: {}", 1 << lg_tcache_max.get().unwrap());
+/// }
 /// ```
 #[derive(Copy, Clone)]
 pub struct LgTcacheMax([usize; 2]);

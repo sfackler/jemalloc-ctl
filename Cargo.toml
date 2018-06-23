@@ -10,3 +10,8 @@ categories = ["api-bindings", "development-tools", "memory-management"]
 keywords = ["jemalloc", "allocators"]
 
 [dependencies]
+jemalloc-sys = { git = "https://github.com/alexcrichton/jemallocator" }
+libc = "0.2"
+
+[dev-dependencies]
+jemallocator = { git = "https://github.com/alexcrichton/jemallocator" }

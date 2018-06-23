@@ -22,11 +22,19 @@ const ALLOCATED: *const c_char = b"stats.allocated\0" as *const _ as *const _;
 /// # Examples
 ///
 /// ```
-/// let a = jemalloc_ctl::stats::allocated().unwrap();
-/// let _buf = vec![0; 1024 * 1024];
-/// jemalloc_ctl::epoch().unwrap();
-/// let b = jemalloc_ctl::stats::allocated().unwrap();
-/// assert!(a < b);
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
+///
+/// fn main() {
+///     let a = jemalloc_ctl::stats::allocated().unwrap();
+///     let _buf = vec![0; 1024 * 1024];
+///     jemalloc_ctl::epoch().unwrap();
+///     let b = jemalloc_ctl::stats::allocated().unwrap();
+///     assert!(a < b);
+/// }
 /// ```
 ///
 /// [`epoch`]: ../fn.epoch().html
@@ -44,17 +52,25 @@ pub fn allocated() -> io::Result<usize> {
 /// # Examples
 ///
 /// ```rust
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
 /// use jemalloc_ctl::Epoch;
 /// use jemalloc_ctl::stats::Allocated;
 ///
-/// let epoch = Epoch::new().unwrap();
-/// let allocated = Allocated::new().unwrap();
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
 ///
-/// let a = allocated.get().unwrap();
-/// let _buf = vec![0; 1024 * 1024];
-/// epoch.advance().unwrap();
-/// let b = allocated.get().unwrap();
-/// assert!(a < b);
+/// fn main() {
+///     let epoch = Epoch::new().unwrap();
+///     let allocated = Allocated::new().unwrap();
+///
+///     let a = allocated.get().unwrap();
+///     let _buf = vec![0; 1024 * 1024];
+///     epoch.advance().unwrap();
+///     let b = allocated.get().unwrap();
+///     assert!(a < b);
+/// }
 /// ```
 ///
 /// [`Epoch`]: ../struct.Epoch.html
@@ -92,11 +108,19 @@ const ACTIVE: *const c_char = b"stats.active\0" as *const _ as *const _;
 /// # Examples
 ///
 /// ```
-/// let a = jemalloc_ctl::stats::active().unwrap();
-/// let _buf = vec![0; 1024 * 1024];
-/// jemalloc_ctl::epoch().unwrap();
-/// let b = jemalloc_ctl::stats::active().unwrap();
-/// assert!(a < b);
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
+///
+/// fn main() {
+///     let a = jemalloc_ctl::stats::active().unwrap();
+///     let _buf = vec![0; 1024 * 1024];
+///     jemalloc_ctl::epoch().unwrap();
+///     let b = jemalloc_ctl::stats::active().unwrap();
+///     assert!(a < b);
+/// }
 /// ```
 ///
 /// [`epoch`]: ../fn.epoch().html
@@ -119,17 +143,25 @@ pub fn active() -> io::Result<usize> {
 /// # Examples
 ///
 /// ```rust
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
 /// use jemalloc_ctl::Epoch;
 /// use jemalloc_ctl::stats::Active;
 ///
-/// let epoch = Epoch::new().unwrap();
-/// let active = Active::new().unwrap();
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
 ///
-/// let a = active.get().unwrap();
-/// let _buf = vec![0; 1024 * 1024];
-/// epoch.advance().unwrap();
-/// let b = active.get().unwrap();
-/// assert!(a < b);
+/// fn main() {
+///     let epoch = Epoch::new().unwrap();
+///     let active = Active::new().unwrap();
+///
+///     let a = active.get().unwrap();
+///     let _buf = vec![0; 1024 * 1024];
+///     epoch.advance().unwrap();
+///     let b = active.get().unwrap();
+///     assert!(a < b);
+/// }
 /// ```
 ///
 /// [`Epoch`]: ../struct.Epoch.html
@@ -165,8 +197,16 @@ const METADATA: *const c_char = b"stats.metadata\0" as *const _ as *const _;
 /// # Examples
 ///
 /// ```
-/// jemalloc_ctl::epoch().unwrap();
-/// println!("{} bytes of jemalloc metadata", jemalloc_ctl::stats::metadata().unwrap());
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
+///
+/// fn main() {
+///     jemalloc_ctl::epoch().unwrap();
+///     println!("{} bytes of jemalloc metadata", jemalloc_ctl::stats::metadata().unwrap());
+/// }
 /// ```
 ///
 /// [`epoch`]: ../fn.epoch.html
@@ -184,15 +224,23 @@ pub fn metadata() -> io::Result<usize> {
 /// # Examples
 ///
 /// ```rust
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
 /// use jemalloc_ctl::Epoch;
 /// use jemalloc_ctl::stats::Metadata;
 ///
-/// let epoch = Epoch::new().unwrap();
-/// let metadata = Metadata::new().unwrap();
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
 ///
-/// epoch.advance().unwrap();
-/// let size = metadata.get().unwrap();
-/// println!("{} bytes of jemalloc metadata", size);
+/// fn main() {
+///     let epoch = Epoch::new().unwrap();
+///     let metadata = Metadata::new().unwrap();
+///
+///     epoch.advance().unwrap();
+///     let size = metadata.get().unwrap();
+///     println!("{} bytes of jemalloc metadata", size);
+/// }
 /// ```
 ///
 /// [`Epoch`]: ../struct.Epoch.html
@@ -233,8 +281,16 @@ const RESIDENT: *const c_char = b"stats.resident\0" as *const _ as *const _;
 /// # Examples
 ///
 /// ```
-/// jemalloc_ctl::epoch().unwrap();
-/// println!("{} bytes of total resident data", jemalloc_ctl::stats::resident().unwrap());
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
+///
+/// fn main() {
+///     jemalloc_ctl::epoch().unwrap();
+///     println!("{} bytes of total resident data", jemalloc_ctl::stats::resident().unwrap());
+/// }
 /// ```
 ///
 /// [`epoch`]: ../fn.epoch.html
@@ -260,15 +316,23 @@ pub fn resident() -> io::Result<usize> {
 /// # Examples
 ///
 /// ```rust
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
 /// use jemalloc_ctl::Epoch;
 /// use jemalloc_ctl::stats::Resident;
 ///
-/// let epoch = Epoch::new().unwrap();
-/// let resident = Resident::new().unwrap();
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
 ///
-/// epoch.advance().unwrap();
-/// let size = resident.get().unwrap();
-/// println!("{} bytes of total resident data", size);
+/// fn main() {
+///     let epoch = Epoch::new().unwrap();
+///     let resident = Resident::new().unwrap();
+///
+///     epoch.advance().unwrap();
+///     let size = resident.get().unwrap();
+///     println!("{} bytes of total resident data", size);
+/// }
 /// ```
 ///
 /// [`Epoch`]: ../struct.Epoch.html
@@ -308,8 +372,16 @@ const MAPPED: *const c_char = b"stats.mapped\0" as *const _ as *const _;
 /// # Examples
 ///
 /// ```
-/// jemalloc_ctl::epoch().unwrap();
-/// println!("{} bytes of total mapped data", jemalloc_ctl::stats::mapped().unwrap());
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
+///
+/// fn main() {
+///     jemalloc_ctl::epoch().unwrap();
+///     println!("{} bytes of total mapped data", jemalloc_ctl::stats::mapped().unwrap());
+/// }
 /// ```
 ///
 /// [`epoch`]: ../fn.epoch.html
@@ -333,15 +405,23 @@ pub fn mapped() -> io::Result<usize> {
 /// # Examples
 ///
 /// ```rust
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
 /// use jemalloc_ctl::Epoch;
 /// use jemalloc_ctl::stats::Mapped;
 ///
-/// let epoch = Epoch::new().unwrap();
-/// let mapped = Mapped::new().unwrap();
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
 ///
-/// epoch.advance().unwrap();
-/// let size = mapped.get().unwrap();
-/// println!("{} bytes of total mapped data", size);
+/// fn main() {
+///     let epoch = Epoch::new().unwrap();
+///     let mapped = Mapped::new().unwrap();
+///
+///     epoch.advance().unwrap();
+///     let size = mapped.get().unwrap();
+///     println!("{} bytes of total mapped data", size);
+/// }
 /// ```
 ///
 /// [`Epoch`]: ../struct.Epoch.html
@@ -382,8 +462,16 @@ const RETAINED: *const c_char = b"stats.retained\0" as *const _ as *const _;
 /// # Examples
 ///
 /// ```
-/// jemalloc_ctl::epoch().unwrap();
-/// println!("{} bytes of total retained data", jemalloc_ctl::stats::retained().unwrap());
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
+///
+/// fn main() {
+///     jemalloc_ctl::epoch().unwrap();
+///     println!("{} bytes of total retained data", jemalloc_ctl::stats::retained().unwrap());
+/// }
 /// ```
 ///
 /// [`epoch`]: ../fn.epoch.html
@@ -406,15 +494,23 @@ pub fn retained() -> io::Result<usize> {
 /// # Examples
 ///
 /// ```rust
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
 /// use jemalloc_ctl::Epoch;
 /// use jemalloc_ctl::stats::Retained;
 ///
-/// let epoch = Epoch::new().unwrap();
-/// let retained = Retained::new().unwrap();
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
 ///
-/// epoch.advance().unwrap();
-/// let size = retained.get().unwrap();
-/// println!("{} bytes of total retained data", size);
+/// fn main() {
+///     let epoch = Epoch::new().unwrap();
+///     let retained = Retained::new().unwrap();
+///
+///     epoch.advance().unwrap();
+///     let size = retained.get().unwrap();
+///     println!("{} bytes of total retained data", size);
+/// }
 /// ```
 ///
 /// [`Epoch`]: ../struct.Epoch.html
