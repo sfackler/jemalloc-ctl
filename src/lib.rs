@@ -434,3 +434,79 @@ impl BackgroundThread {
         unsafe { set_mib(&self.0, background_thread) }
     }
 }
+
+const MAX_BACKGROUND_THREADS: *const c_char = b"max_background_threads\0" as *const _ as *const _;
+
+/// Returns the maximum number of background threads that will be created.
+///
+/// ```
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
+///
+/// fn main() {
+///     println!("max_background_threads: {}", jemalloc_ctl::max_background_threads().unwrap());
+/// }
+/// ```
+pub fn max_background_threads() -> io::Result<usize> {
+    unsafe { get(MAX_BACKGROUND_THREADS) }
+}
+
+/// Sets the maximum number of background threads that will be created.
+///
+/// ```
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
+///
+/// fn main() {
+///     jemalloc_ctl::set_max_background_threads(1).unwrap();
+///     assert_eq!(jemalloc_ctl::max_background_threads().unwrap(), 1);
+/// }
+/// ```
+pub fn set_max_background_threads(max_background_threads: usize) -> io::Result<()> {
+    unsafe { set(MAX_BACKGROUND_THREADS, max_background_threads) }
+}
+
+/// A type providing access to the maximum number of background threads that will be created.
+///
+/// ```
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
+///
+/// fn main() {
+///     let mut max_background_threads = jemalloc_ctl::MaxBackgroundThreads::new().unwrap();
+///     max_background_threads.set(1).unwrap();
+///     assert_eq!(max_background_threads.get().unwrap(), 1);
+/// }
+/// ```
+#[derive(Copy, Clone)]
+pub struct MaxBackgroundThreads([usize; 1]);
+
+impl MaxBackgroundThreads {
+    /// Returns a new `MaxBackgroundThreads`.
+    pub fn new() -> io::Result<MaxBackgroundThreads> {
+        let mut mib = [0; 1];
+        unsafe {
+            name_to_mib(MAX_BACKGROUND_THREADS, &mut mib)?;
+        }
+        Ok(MaxBackgroundThreads(mib))
+    }
+
+    /// Returns the current background thread limit.
+    pub fn get(&self) -> io::Result<usize> {
+        unsafe { get_mib(&self.0) }
+    }
+
+    /// Sets the background thread limit.
+    pub fn set(&self, max_background_threads: usize) -> io::Result<()> {
+        unsafe { set_mib(&self.0, max_background_threads) }
+    }
+}
