@@ -14,12 +14,6 @@
 //! performed. Its constructor performs the MIB lookup, so the struct should be saved if the same
 //! operation is going to be repeatedly performed.
 //!
-//! # Warning
-//!
-//! This library is forced to assume that jemalloc is present and simply link to some of its
-//! functions. This will result in linker errors when building a binary that doesn't actually use
-//! jemalloc as its allocator.
-//!
 //! # Examples
 //!
 //! Repeatedly printing allocation statistics:
