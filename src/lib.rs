@@ -87,10 +87,10 @@ extern crate jemallocator;
 #[global_allocator]
 static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
 
+use libc::{c_char, c_int};
 use std::ffi::CStr;
 use std::io;
 use std::mem;
-use libc::{c_char, c_int};
 use std::ptr;
 
 pub mod arenas;
@@ -102,7 +102,11 @@ pub mod thread;
 
 unsafe fn name_to_mib(name: *const c_char, mib: &mut [usize]) -> io::Result<()> {
     let mut len = mib.len();
-    cvt(jemalloc_sys::mallctlnametomib(name, mib.as_mut_ptr(), &mut len))?;
+    cvt(jemalloc_sys::mallctlnametomib(
+        name,
+        mib.as_mut_ptr(),
+        &mut len,
+    ))?;
     debug_assert_eq!(mib.len(), len);
     Ok(())
 }
@@ -185,6 +189,68 @@ fn cvt(ret: c_int) -> io::Result<()> {
     }
 }
 
+const VERSION: *const c_char = b"version\0" as *const _ as *const _;
+
+/// Returns the jemalloc version string.
+///
+/// # Note
+///
+/// The version of jemalloc currently shipped with the Rust distribution has a bogus version string.
+///
+/// # Example
+///
+/// ```
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
+///
+/// fn main() {
+///     println!("jemalloc version {}", jemalloc_ctl::version().unwrap());
+/// }
+/// ```
+pub fn version() -> io::Result<&'static str> {
+    unsafe { get_str(VERSION) }
+}
+
+/// A type providing access to the jemalloc version string.
+///
+/// # Example
+///
+/// ```
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
+/// use jemalloc_ctl::Version;
+///
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
+///
+/// fn main() {
+///     let version = Version::new().unwrap();
+///
+///     println!("jemalloc version {}", version.get().unwrap());
+/// }
+#[derive(Copy, Clone)]
+pub struct Version([usize; 1]);
+
+impl Version {
+    /// Returns a new `Version`.
+    pub fn new() -> io::Result<Version> {
+        let mut mib = [0; 1];
+        unsafe {
+            name_to_mib(VERSION, &mut mib)?;
+        }
+        Ok(Version(mib))
+    }
+
+    /// Returns the jemalloc version string.
+    pub fn get(&self) -> io::Result<&'static str> {
+        unsafe { get_str_mib(&self.0) }
+    }
+}
+
 const EPOCH: *const c_char = b"epoch\0" as *const _ as *const _;
 
 /// Advances the jemalloc epoch, returning it.
@@ -257,67 +323,5 @@ impl Epoch {
     /// another thread triggered a referesh.
     pub fn advance(&self) -> io::Result<u64> {
         unsafe { get_set_mib(&self.0, 1) }
-    }
-}
-
-const VERSION: *const c_char = b"version\0" as *const _ as *const _;
-
-/// Returns the jemalloc version string.
-///
-/// # Note
-///
-/// The version of jemalloc currently shipped with the Rust distribution has a bogus version string.
-///
-/// # Example
-///
-/// ```
-/// extern crate jemallocator;
-/// extern crate jemalloc_ctl;
-///
-/// #[global_allocator]
-/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
-///
-/// fn main() {
-///     println!("jemalloc version {}", jemalloc_ctl::version().unwrap());
-/// }
-/// ```
-pub fn version() -> io::Result<&'static str> {
-    unsafe { get_str(VERSION) }
-}
-
-/// A type providing access to the jemalloc version string.
-///
-/// # Example
-///
-/// ```
-/// extern crate jemallocator;
-/// extern crate jemalloc_ctl;
-///
-/// use jemalloc_ctl::Version;
-///
-/// #[global_allocator]
-/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
-///
-/// fn main() {
-///     let version = Version::new().unwrap();
-///
-///     println!("jemalloc version {}", version.get().unwrap());
-/// }
-#[derive(Copy, Clone)]
-pub struct Version([usize; 1]);
-
-impl Version {
-    /// Returns a new `Version`.
-    pub fn new() -> io::Result<Version> {
-        let mut mib = [0; 1];
-        unsafe {
-            name_to_mib(VERSION, &mut mib)?;
-        }
-        Ok(Version(mib))
-    }
-
-    /// Returns the jemalloc version string.
-    pub fn get(&self) -> io::Result<&'static str> {
-        unsafe { get_str_mib(&self.0) }
     }
 }

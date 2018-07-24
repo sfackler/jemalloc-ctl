@@ -1,11 +1,11 @@
 //! Bulk statistics output.
 
+use jemalloc_sys;
+use libc::{c_char, c_void};
 use std::any::Any;
 use std::ffi::CStr;
 use std::io::{self, Write};
-use libc::{c_char, c_void};
 use std::panic::{self, AssertUnwindSafe};
-use jemalloc_sys;
 
 /// Statistics configuration.
 ///
