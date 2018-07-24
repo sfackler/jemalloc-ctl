@@ -5,8 +5,8 @@
 //! provides a typed API over that interface.
 //!
 //! While `mallctl` takes a string to specify an operation (e.g. `stats.allocated` or
-//! stats.arenas.15.muzzy_decay_ms`), the overhead of repeatedly parsing those strings is not ideal.
-//! Fortunately, jemalloc offers the ability to translate the string ahead of time into a
+//! `stats.arenas.15.muzzy_decay_ms`), the overhead of repeatedly parsing those strings is not
+//! ideal. Fortunately, jemalloc offers the ability to translate the string ahead of time into a
 //! "Management Information Base" (MIB) to speed up future lookups.
 //!
 //! This crate provides both a function and a type for each `mallctl` operation. While the
