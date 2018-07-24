@@ -154,6 +154,27 @@ unsafe fn get_str(name: *const c_char) -> io::Result<&'static str> {
         .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
 }
 
+unsafe fn set_mib<T>(mib: &[usize], mut value: T) -> io::Result<()> {
+    cvt(jemalloc_sys::mallctlbymib(
+        mib.as_ptr(),
+        mib.len(),
+        ptr::null_mut(),
+        ptr::null_mut(),
+        &mut value as *mut _ as *mut _,
+        mem::size_of::<T>(),
+    ))
+}
+
+unsafe fn set<T>(name: *const c_char, mut value: T) -> io::Result<()> {
+    cvt(jemalloc_sys::mallctl(
+        name,
+        ptr::null_mut(),
+        ptr::null_mut(),
+        &mut value as *mut _ as *mut _,
+        mem::size_of::<T>(),
+    ))
+}
+
 unsafe fn get_set_mib<T>(mib: &[usize], mut value: T) -> io::Result<T> {
     let mut len = mem::size_of::<T>();
     cvt(jemalloc_sys::mallctlbymib(
@@ -323,5 +344,93 @@ impl Epoch {
     /// another thread triggered a referesh.
     pub fn advance(&self) -> io::Result<u64> {
         unsafe { get_set_mib(&self.0, 1) }
+    }
+}
+
+const BACKGROUND_THREAD: *const c_char = b"background_thread\0" as *const _ as *const _;
+
+/// Returns the state of internal background worker threads.
+///
+/// When enabled, background threads are created on demand (the number of background threads will
+/// be no more than the number of CPUs or active arenas). Threads run periodically and handle
+/// purging asynchronously.
+///
+/// ```
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
+///
+/// fn main() {
+///     println!("background_thread: {}", jemalloc_ctl::background_thread().unwrap());
+/// }
+/// ```
+pub fn background_thread() -> io::Result<bool> {
+    unsafe { get(BACKGROUND_THREAD) }
+}
+
+/// Enables or disables internal background worker threads.
+///
+/// When enabled, background threads are created on demand (the number of background threads will
+/// be no more than the number of CPUs or active arenas). Threads run periodically and handle
+/// purging asynchronously.
+///
+/// ```
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
+///
+/// fn main() {
+///     jemalloc_ctl::set_background_thread(true).unwrap();
+///     assert!(jemalloc_ctl::background_thread().unwrap());
+/// }
+/// ```
+pub fn set_background_thread(background_thread: bool) -> io::Result<()> {
+    unsafe { set(BACKGROUND_THREAD, background_thread) }
+}
+
+/// A type providing access to the state of internal background worker threads.
+///
+/// When enabled, background threads are created on demand (the number of background threads will
+/// be no more than the number of CPUs or active arenas). Threads run periodically and handle
+/// purging asynchronously.
+///
+/// ```
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
+///
+/// fn main() {
+///     let mut background_thread = jemalloc_ctl::BackgroundThread::new().unwrap();
+///     background_thread.set(true).unwrap();
+///     assert!(background_thread.get().unwrap());
+/// }
+/// ```
+#[derive(Copy, Clone)]
+pub struct BackgroundThread([usize; 1]);
+
+impl BackgroundThread {
+    /// Returns a new `BackgroundThread`.
+    pub fn new() -> io::Result<BackgroundThread> {
+        let mut mib = [0; 1];
+        unsafe {
+            name_to_mib(BACKGROUND_THREAD, &mut mib)?;
+        }
+        Ok(BackgroundThread(mib))
+    }
+
+    /// Returns the current background thread state.
+    pub fn get(&self) -> io::Result<bool> {
+        unsafe { get_mib(&self.0) }
+    }
+
+    /// Sets the background thread state.
+    pub fn set(&self, background_thread: bool) -> io::Result<()> {
+        unsafe { set_mib(&self.0, background_thread) }
     }
 }
