@@ -10,3 +10,8 @@ categories = ["api-bindings", "development-tools", "memory-management"]
 keywords = ["jemalloc", "allocators"]
 
 [dependencies]
+jemalloc-sys = { version = "0.1.7", default-features = false }
+libc = "0.2"
+
+[dev-dependencies]
+jemallocator = "0.1.7"

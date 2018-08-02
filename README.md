@@ -8,17 +8,25 @@ jemalloc control and introspection.
 ## Example
 
 ```rust
+extern crate jemallocator;
+extern crate jemalloc_ctl;
+
 use std::thread;
 use std::time::Duration;
 
-loop {
-    // many statistics are cached and only updated when the epoch is advanced.
-    jemalloc_ctl::epoch().unwrap();
+#[global_allocator]
+static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
 
-    let allocated = jemalloc_ctl::stats::allocated().unwrap();
-    let resident = jemalloc_ctl::stats::resident().unwrap();
-    println!("{} bytes allocated/{} bytes resident", allocated, resident);
-    thread::sleep(Duration::from_secs(10));
+fn main() {
+    loop {
+        // many statistics are cached and only updated when the epoch is advanced.
+        jemalloc_ctl::epoch().unwrap();
+
+        let allocated = jemalloc_ctl::stats::allocated().unwrap();
+        let resident = jemalloc_ctl::stats::resident().unwrap();
+        println!("{} bytes allocated/{} bytes resident", allocated, resident);
+        thread::sleep(Duration::from_secs(10));
+    }
 }
 ```
 

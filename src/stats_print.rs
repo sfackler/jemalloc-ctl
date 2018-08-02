@@ -1,18 +1,22 @@
 //! Bulk statistics output.
 
+use jemalloc_sys;
+use libc::{c_char, c_void};
 use std::any::Any;
 use std::ffi::CStr;
 use std::io::{self, Write};
-use std::os::raw::{c_char, c_void};
 use std::panic::{self, AssertUnwindSafe};
-
-use malloc_stats_print;
 
 /// Statistics configuration.
 ///
 /// All options default to `false`.
 #[derive(Copy, Clone, Default)]
 pub struct Options {
+    /// If set, the output will be JSON-formatted.
+    ///
+    /// This corresponds to the `J` character.
+    pub json_format: bool,
+
     /// If set, information that never changes during execution will be skipped.
     ///
     /// This corresponds to the `g` character.
@@ -38,6 +42,11 @@ pub struct Options {
     /// This corresponds to the `l` character.
     pub skip_large_size_classes: bool,
 
+    /// If set, mutex statistics will be skipped.
+    ///
+    /// This corresponds to the `x` character.
+    pub skip_mutex_statistics: bool,
+
     _p: (),
 }
 
@@ -47,20 +56,22 @@ struct State<W> {
     panic: Result<(), Box<Any + Send>>,
 }
 
-unsafe extern "C" fn callback<W>(opaque: *mut c_void, buf: *const c_char)
+extern "C" fn callback<W>(opaque: *mut c_void, buf: *const c_char)
 where
     W: Write,
 {
-    let state = &mut *(opaque as *mut State<W>);
-    if state.error.is_err() || state.panic.is_err() {
-        return;
-    }
+    unsafe {
+        let state = &mut *(opaque as *mut State<W>);
+        if state.error.is_err() || state.panic.is_err() {
+            return;
+        }
 
-    let buf = CStr::from_ptr(buf);
-    match panic::catch_unwind(AssertUnwindSafe(|| state.writer.write_all(buf.to_bytes()))) {
-        Ok(Ok(_)) => {}
-        Ok(Err(e)) => state.error = Err(e),
-        Err(e) => state.panic = Err(e),
+        let buf = CStr::from_ptr(buf);
+        match panic::catch_unwind(AssertUnwindSafe(|| state.writer.write_all(buf.to_bytes()))) {
+            Ok(Ok(_)) => {}
+            Ok(Err(e)) => state.error = Err(e),
+            Err(e) => state.panic = Err(e),
+        }
     }
 }
 
@@ -78,8 +89,12 @@ where
             error: Ok(()),
             panic: Ok(()),
         };
-        let mut opts = [0; 6];
+        let mut opts = [0; 8];
         let mut i = 0;
+        if options.json_format {
+            opts[i] = b'J' as c_char;
+            i += 1;
+        }
         if options.skip_constants {
             opts[i] = b'g' as c_char;
             i += 1;
@@ -100,10 +115,14 @@ where
             opts[i] = b'l' as c_char;
             i += 1;
         }
+        if options.skip_mutex_statistics {
+            opts[i] = b'x' as c_char;
+            i += 1;
+        }
         opts[i] = 0;
 
-        malloc_stats_print(
-            Some(callback::<W>),
+        jemalloc_sys::malloc_stats_print(
+            callback::<W>,
             &mut state as *mut _ as *mut c_void,
             opts.as_ptr(),
         );
@@ -129,12 +148,14 @@ mod test {
     fn all_options() {
         let mut buf = vec![];
         let options = Options {
+            json_format: true,
             skip_constants: true,
             skip_merged_arenas: true,
             skip_per_arena: true,
             skip_bin_size_classes: true,
             skip_large_size_classes: true,
-            ..Options::default()
+            skip_mutex_statistics: true,
+            _p: (),
         };
         stats_print(&mut buf, options).unwrap();
         println!("{}", String::from_utf8(buf).unwrap());

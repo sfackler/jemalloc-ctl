@@ -13,7 +13,15 @@ const MALLOC_CONF: *const c_char = b"config.malloc_conf\0" as *const _ as *const
 /// # Examples
 ///
 /// ```
-/// println!("default malloc conf: {}", jemalloc_ctl::config::malloc_conf().unwrap());
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
+///
+/// fn main() {
+///     println!("default malloc conf: {}", jemalloc_ctl::config::malloc_conf().unwrap());
+/// }
 /// ```
 pub fn malloc_conf() -> io::Result<&'static str> {
     unsafe { get_str(MALLOC_CONF) }
@@ -26,11 +34,19 @@ pub fn malloc_conf() -> io::Result<&'static str> {
 /// # Examples
 ///
 /// ```
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
 /// use jemalloc_ctl::config::MallocConf;
 ///
-/// let malloc_conf = MallocConf::new().unwrap();
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
 ///
-/// println!("default malloc conf: {}", malloc_conf.get().unwrap());
+/// fn main() {
+///     let malloc_conf = MallocConf::new().unwrap();
+///
+///     println!("default malloc conf: {}", malloc_conf.get().unwrap());
+/// }
 /// ```
 #[derive(Copy, Clone)]
 pub struct MallocConf([usize; 2]);

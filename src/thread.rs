@@ -4,11 +4,6 @@ use std::os::raw::c_char;
 
 use {get, get_mib, name_to_mib};
 
-#[deprecated(note = "renamed to AllocatedP", since = "0.1.3")]
-pub use thread::AllocatedP as Allocated;
-#[deprecated(note = "renamed to DeallocatedP", since = "0.1.3")]
-pub use thread::DeallocatedP as Deallocated;
-
 const ALLOCATEDP: *const c_char = b"thread.allocatedp\0" as *const _ as *const _;
 
 /// Returns a thread-local pointer to the total number of bytes allocated by the current thread.
@@ -27,16 +22,24 @@ const ALLOCATEDP: *const c_char = b"thread.allocatedp\0" as *const _ as *const _
 /// # Examples
 ///
 /// ```
-/// let allocated = jemalloc_ctl::thread::allocatedp().unwrap();
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
 ///
-/// let a = allocated.get();
-/// let buf = vec![0; 1024 * 1024];
-/// let b = allocated.get();
-/// drop(buf);
-/// let c = allocated.get();
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
 ///
-/// assert!(a < b);
-/// assert_eq!(b, c);
+/// fn main() {
+///     let allocated = jemalloc_ctl::thread::allocatedp().unwrap();
+///
+///     let a = allocated.get();
+///     let buf = vec![0; 1024 * 1024];
+///     let b = allocated.get();
+///     drop(buf);
+///     let c = allocated.get();
+///
+///     assert!(a < b);
+///     assert_eq!(b, c);
+/// }
 /// ```
 pub fn allocatedp() -> io::Result<ThreadLocal<u64>> {
     unsafe { get(ALLOCATEDP).map(ThreadLocal) }
@@ -56,19 +59,27 @@ pub fn allocatedp() -> io::Result<ThreadLocal<u64>> {
 /// # Example
 ///
 /// ```
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
 /// use jemalloc_ctl::thread::AllocatedP;
 ///
-/// let allocated = AllocatedP::new().unwrap();
-/// let allocated = allocated.get().unwrap();
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
 ///
-/// let a = allocated.get();
-/// let buf = vec![0; 1024 * 1024];
-/// let b = allocated.get();
-/// drop(buf);
-/// let c = allocated.get();
+/// fn main() {
+///     let allocated = AllocatedP::new().unwrap();
+///     let allocated = allocated.get().unwrap();
 ///
-/// assert!(a < b);
-/// assert_eq!(b, c);
+///     let a = allocated.get();
+///     let buf = vec![0; 1024 * 1024];
+///     let b = allocated.get();
+///     drop(buf);
+///     let c = allocated.get();
+///
+///     assert!(a < b);
+///     assert_eq!(b, c);
+/// }
 /// ```
 ///
 /// [`stats::Allocated`]: ../stats/struct.Allocated.html
@@ -105,16 +116,24 @@ const DEALLOCATEDP: *const c_char = b"thread.deallocatedp\0" as *const _ as *con
 /// # Examples
 ///
 /// ```
-/// let deallocated = jemalloc_ctl::thread::deallocatedp().unwrap();
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
 ///
-/// let a = deallocated.get();
-/// let buf = vec![0; 1024 * 1024];
-/// let b = deallocated.get();
-/// drop(buf);
-/// let c = deallocated.get();
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
 ///
-/// assert_eq!(a, b);
-/// assert!(b < c);
+/// fn main() {
+///     let deallocated = jemalloc_ctl::thread::deallocatedp().unwrap();
+///
+///     let a = deallocated.get();
+///     let buf = vec![0; 1024 * 1024];
+///     let b = deallocated.get();
+///     drop(buf);
+///     let c = deallocated.get();
+///
+///     assert_eq!(a, b);
+///     assert!(b < c);
+/// }
 /// ```
 pub fn deallocatedp() -> io::Result<ThreadLocal<u64>> {
     unsafe { get(DEALLOCATEDP).map(ThreadLocal) }
@@ -130,19 +149,27 @@ pub fn deallocatedp() -> io::Result<ThreadLocal<u64>> {
 /// # Example
 ///
 /// ```
+/// extern crate jemallocator;
+/// extern crate jemalloc_ctl;
+///
 /// use jemalloc_ctl::thread::DeallocatedP;
 ///
-/// let deallocated = DeallocatedP::new().unwrap();
-/// let deallocated = deallocated.get().unwrap();
+/// #[global_allocator]
+/// static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
 ///
-/// let a = deallocated.get();
-/// let buf = vec![0; 1024 * 1024];
-/// let b = deallocated.get();
-/// drop(buf);
-/// let c = deallocated.get();
+/// fn main() {
+///     let deallocated = DeallocatedP::new().unwrap();
+///     let deallocated = deallocated.get().unwrap();
 ///
-/// assert_eq!(a, b);
-/// assert!(b < c);
+///     let a = deallocated.get();
+///     let buf = vec![0; 1024 * 1024];
+///     let b = deallocated.get();
+///     drop(buf);
+///     let c = deallocated.get();
+///
+///     assert_eq!(a, b);
+///     assert!(b < c);
+/// }
 /// ```
 #[derive(Copy, Clone)]
 pub struct DeallocatedP([usize; 2]);
