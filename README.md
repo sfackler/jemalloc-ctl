@@ -3,6 +3,8 @@
 
 [Documentation](https://docs.rs/jemalloc-ctl)
 
+[jemalloc Documentation](http://jemalloc.net/jemalloc.3.html)
+
 jemalloc control and introspection.
 
 ## Example
